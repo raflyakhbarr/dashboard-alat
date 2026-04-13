@@ -278,59 +278,7 @@ export async function getRTGUnitsByStatus(status: StatusKondisiRTG): Promise<RTG
 
 // ============= TEMUAN RTG =============
 
-export async function getAllTemuan(): Promise<TemuanRTGWithDetails[]> {
-  const result = await pool.query(`
-    SELECT
-      t.*,
-      u.kode_rtg,
-      u.nama_rtg,
-      p.nama as pelapor_nama,
-      p.email as pelapor_email
-    FROM temuan_rtg t
-    LEFT JOIN rtg_units u ON t.rtg_unit_id = u.id
-    LEFT JOIN users p ON t.pelapor_id = p.id
-    ORDER BY t.tanggal_temuan DESC, t.waktu_temuan DESC
-  `);
-
-  return result.rows.map((row: any) => ({
-    id: row.id,
-    rtg_unit_id: row.rtg_unit_id,
-    pelapor_id: row.pelapor_id,
-    tanggal_temuan: row.tanggal_temuan,
-    waktu_temuan: row.waktu_temuan,
-    jenis_temuan: row.jenis_temuan,
-    deskripsi_temuan: row.deskripsi_temuan,
-    foto: row.foto || [],
-    status_temuan: row.status_temuan,
-    created_at: row.created_at,
-    rtg_unit: {
-      kode_rtg: row.kode_rtg,
-      nama_rtg: row.nama_rtg,
-    },
-    pelapor: {
-      nama: row.pelapor_nama,
-      email: row.pelapor_email,
-    },
-  }));
-}
-
-export async function getTemuanById(id: string): Promise<TemuanRTGWithDetails | null> {
-  const result = await pool.query(`
-    SELECT
-      t.*,
-      u.kode_rtg,
-      u.nama_rtg,
-      p.nama as pelapor_nama,
-      p.email as pelapor_email
-    FROM temuan_rtg t
-    LEFT JOIN rtg_units u ON t.rtg_unit_id = u.id
-    LEFT JOIN users p ON t.pelapor_id = p.id
-    WHERE t.id = $1
-  `, [id]);
-
-  if (result.rows.length === 0) return null;
-
-  const row = result.rows[0];
+function mapTemuanRow(row: any): TemuanRTGWithDetails {
   return {
     id: row.id,
     rtg_unit_id: row.rtg_unit_id,
@@ -353,6 +301,42 @@ export async function getTemuanById(id: string): Promise<TemuanRTGWithDetails | 
   };
 }
 
+export async function getAllTemuan(): Promise<TemuanRTGWithDetails[]> {
+  const result = await pool.query(`
+    SELECT
+      t.*,
+      u.kode_rtg,
+      u.nama_rtg,
+      p.nama as pelapor_nama,
+      p.email as pelapor_email
+    FROM temuan_rtg t
+    LEFT JOIN rtg_units u ON t.rtg_unit_id = u.id
+    LEFT JOIN users p ON t.pelapor_id = p.id
+    ORDER BY t.tanggal_temuan DESC, t.waktu_temuan DESC
+  `);
+
+  return result.rows.map(mapTemuanRow);
+}
+
+export async function getTemuanById(id: string): Promise<TemuanRTGWithDetails | null> {
+  const result = await pool.query(`
+    SELECT
+      t.*,
+      u.kode_rtg,
+      u.nama_rtg,
+      p.nama as pelapor_nama,
+      p.email as pelapor_email
+    FROM temuan_rtg t
+    LEFT JOIN rtg_units u ON t.rtg_unit_id = u.id
+    LEFT JOIN users p ON t.pelapor_id = p.id
+    WHERE t.id = $1
+  `, [id]);
+
+  if (result.rows.length === 0) return null;
+
+  return mapTemuanRow(result.rows[0]);
+}
+
 export async function getTemuanByPelapor(pelaporId: string): Promise<TemuanRTGWithDetails[]> {
   const result = await pool.query(`
     SELECT
@@ -368,26 +352,7 @@ export async function getTemuanByPelapor(pelaporId: string): Promise<TemuanRTGWi
     ORDER BY t.tanggal_temuan DESC, t.waktu_temuan DESC
   `, [pelaporId]);
 
-  return result.rows.map((row: any) => ({
-    id: row.id,
-    rtg_unit_id: row.rtg_unit_id,
-    pelapor_id: row.pelapor_id,
-    tanggal_temuan: row.tanggal_temuan,
-    waktu_temuan: row.waktu_temuan,
-    jenis_temuan: row.jenis_temuan,
-    deskripsi_temuan: row.deskripsi_temuan,
-    foto: row.foto || [],
-    status_temuan: row.status_temuan,
-    created_at: row.created_at,
-    rtg_unit: {
-      kode_rtg: row.kode_rtg,
-      nama_rtg: row.nama_rtg,
-    },
-    pelapor: {
-      nama: row.pelapor_nama,
-      email: row.pelapor_email,
-    },
-  }));
+  return result.rows.map(mapTemuanRow);
 }
 
 export async function getTemuanByStatus(status: StatusTemuan): Promise<TemuanRTGWithDetails[]> {
@@ -405,26 +370,7 @@ export async function getTemuanByStatus(status: StatusTemuan): Promise<TemuanRTG
     ORDER BY t.tanggal_temuan DESC, t.waktu_temuan DESC
   `, [status]);
 
-  return result.rows.map((row: any) => ({
-    id: row.id,
-    rtg_unit_id: row.rtg_unit_id,
-    pelapor_id: row.pelapor_id,
-    tanggal_temuan: row.tanggal_temuan,
-    waktu_temuan: row.waktu_temuan,
-    jenis_temuan: row.jenis_temuan,
-    deskripsi_temuan: row.deskripsi_temuan,
-    foto: row.foto || [],
-    status_temuan: row.status_temuan,
-    created_at: row.created_at,
-    rtg_unit: {
-      kode_rtg: row.kode_rtg,
-      nama_rtg: row.nama_rtg,
-    },
-    pelapor: {
-      nama: row.pelapor_nama,
-      email: row.pelapor_email,
-    },
-  }));
+  return result.rows.map(mapTemuanRow);
 }
 
 export async function createTemuan(input: TemuanRTGInput & { pelapor_id: string }): Promise<TemuanRTG> {
