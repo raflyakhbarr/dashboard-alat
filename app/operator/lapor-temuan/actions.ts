@@ -1,6 +1,6 @@
 'use server';
 
-import { redirect } from 'next/navigation';
+import { redirect, revalidatePath } from 'next/navigation';
 import { createTemuan, updateRTGUnitStatus } from '@/lib/rtg';
 import { uploadPhotos, isAutoUpdateKeyword } from '@/lib/upload';
 import { getSession } from '@/lib/auth';
@@ -42,6 +42,7 @@ export async function submitLaporan(formData: FormData) {
       await updateRTGUnitStatus(rtg_unit_id, 'TIDAK_READY');
     }
 
+    revalidatePath('/operator/riwayat-temuan');
     redirect('/operator/riwayat-temuan');
   } catch (error: any) {
     // For now, redirect back to the form on error
