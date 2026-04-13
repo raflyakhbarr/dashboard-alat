@@ -1,6 +1,6 @@
 'use server';
 
-import { redirect, revalidatePath } from 'next/navigation';
+import { redirect } from 'next/navigation';
 import { createTemuan, updateRTGUnitStatus } from '@/lib/rtg';
 import { uploadPhotos, isAutoUpdateKeyword } from '@/lib/upload';
 import { getSession } from '@/lib/auth';
@@ -35,7 +35,6 @@ export async function submitLaporan(formData: FormData) {
       jenis_temuan,
       deskripsi_temuan,
       foto,
-    utility: session.id,
     });
 
     // Auto-update RTG status if keyword detected
@@ -43,9 +42,11 @@ export async function submitLaporan(formData: FormData) {
       await updateRTGUnitStatus(rtg_unit_id, 'TIDAK_READY');
     }
 
-    revalidatePath('/operator/riwayat-temuan');
     redirect('/operator/riwayat-temuan');
   } catch (error: any) {
-    return { error: error.message };
+    // For now, redirect back to the form on error
+    // TODO: Add proper error handling with toast notifications
+    console.error('Error submitting laporan:', error);
+    redirect('/operator/lapor-temuan?error=true');
   }
 }
