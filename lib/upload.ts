@@ -1,17 +1,21 @@
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
-import { existsSync } from 'fs';
 
 const UPLOAD_DIR = join(process.cwd(), 'public', 'uploads', 'temuan');
 
-// Ensure upload directory exists
+// Extension whitelist
+const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'] as const;
+
 export async function ensureUploadDir() {
-  if (!existsSync(UPLOAD_DIR)) {
-    await mkdir(UPLOAD_DIR, { recursive: true });
-  }
+  await mkdir(UPLOAD_DIR, { recursive: true });
 }
 
 export async function uploadPhotos(files: File[] | FileList): Promise<string[]> {
+  // Input validation
+  if (!files || files.length === 0) {
+    throw new Error('No files provided');
+  }
+
   await ensureUploadDir();
 
   const uploadPromises = Array.from(files).slice(0, 3).map(async (file) => {
@@ -27,10 +31,15 @@ export async function uploadPhotos(files: File[] | FileList): Promise<string[]> 
       throw new Error(`File too large: ${file.name}. Max size is 5MB.`);
     }
 
+    // Extract and validate extension
+    const ext = file.name.split('.').pop()?.toLowerCase();
+    if (!ext || !ALLOWED_EXTENSIONS.includes(ext as any)) {
+      throw new Error(`Invalid file extension: ${ext}. Only jpg, jpeg, png, webp allowed.`);
+    }
+
     // Generate unique filename
     const timestamp = Date.now();
     const randomStr = Math.random().toString(36).substring(2, 8);
-    const ext = file.name.split('.').pop();
     const filename = `temuan-${timestamp}-${randomStr}.${ext}`;
 
     // Convert file to buffer
