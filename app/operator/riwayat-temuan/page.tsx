@@ -24,9 +24,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { History } from 'lucide-react';
 import { getTemuanByPelapor } from '@/lib/rtg';
-import { StatusTemuanLabels, type TemuanRTGWithDetails } from '@/types/rtg';
+import { StatusTemuanLabels, type StatusTemuan } from '@/types/rtg';
+import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
 
 export default async function RiwayatTemuanPage() {
   const session = await getSession();
@@ -37,12 +38,28 @@ export default async function RiwayatTemuanPage() {
 
   const temuanList = await getTemuanByPelapor(session.id);
 
-  // Status colors for badge styling
-  const statusColors: Record<string, string> = {
-    DIPERIKSA: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
-    DITINDAKLANJUTI: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-    SELESAI: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-    DITUTUP: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200',
+  // Status badge colors
+  const statusColors: Record<StatusTemuan, string> = {
+    DIPERIKSA: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 border-yellow-300',
+    DITINDAKLANJUTI: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 border-blue-300',
+    SELESAI: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border-green-300',
+    DITUTUP: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200 border-gray-300',
+  };
+
+  // Format date to Indonesian locale
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('id-ID', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+    });
+  };
+
+  // Format time to HH:MM format
+  const formatTime = (timeString: string) => {
+    const [hours, minutes] = timeString.split(':');
+    return `${hours}:${minutes}`;
   };
 
   return (
@@ -71,18 +88,40 @@ export default async function RiwayatTemuanPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold">Riwayat Temuan</h1>
-              <p className="text-muted-foreground">Daftar laporan temuan yang telah Anda laporkan</p>
+              <p className="text-muted-foreground">
+                Daftar laporan temuan yang telah Anda submit ({temuanList.length} laporan)
+              </p>
             </div>
-            <History className="h-6 w-6 text-muted-foreground" />
+            <Link href="/operator/lapor-temuan">
+              <button className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
+                + Lapor Temuan Baru
+              </button>
+            </Link>
           </div>
 
           <Card>
             <CardHeader>
-              <CardTitle>Daftar Laporan Temuan</CardTitle>
-              <CardDescription>Total: {temuanList.length} laporan</CardDescription>
+              <CardTitle>Daftar Temuan</CardTitle>
+              <CardDescription>Riwayat semua laporan temuan RTG</CardDescription>
             </CardHeader>
             <CardContent>
-              {temuanList.length > 0 ? (
+              {temuanList.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="text-center">
+                    <p className="text-lg font-medium text-muted-foreground">
+                      Belum ada laporan temuan
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Mulai laporkan temuan atau kerusakan pada unit RTG
+                    </p>
+                    <Link href="/operator/lapor-temuan" className="mt-4 inline-block">
+                      <button className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2">
+                        Buat Laporan Pertama
+                      </button>
+                    </Link>
+                  </div>
+                </div>
+              ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -94,33 +133,26 @@ export default async function RiwayatTemuanPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {temuanList.map((temuan: TemuanRTGWithDetails) => (
+                    {temuanList.map((temuan) => (
                       <TableRow key={temuan.id}>
+                        <TableCell>{formatDate(temuan.tanggal_temuan)}</TableCell>
+                        <TableCell>{formatTime(temuan.waktu_temuan)}</TableCell>
                         <TableCell>
-                          {new Date(temuan.tanggal_temuan).toLocaleDateString('id-ID', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric'
-                          })}
-                        </TableCell>
-                        <TableCell>{temuan.waktu_temuan}</TableCell>
-                        <TableCell className="font-medium">
-                          {temuan.rtg_unit.kode_rtg} - {temuan.rtg_unit.nama_rtg}
+                          <div className="flex flex-col">
+                            <span className="font-medium">{temuan.rtg_unit.kode_rtg}</span>
+                            <span className="text-xs text-muted-foreground">{temuan.rtg_unit.nama_rtg}</span>
+                          </div>
                         </TableCell>
                         <TableCell>{temuan.jenis_temuan}</TableCell>
                         <TableCell>
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[temuan.status_temuan]}`}>
+                          <Badge className={statusColors[temuan.status_temuan]}>
                             {StatusTemuanLabels[temuan.status_temuan]}
-                          </span>
+                          </Badge>
                         </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
-              ) : (
-                <div className="text-center text-muted-foreground py-8">
-                  Belum ada laporan temuan
-                </div>
               )}
             </CardContent>
           </Card>

@@ -1,0 +1,35 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npx tsx:*)",
+      "Bash(psql:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(npm run build:*)",
+      "Bash(where psql:*)",
+      "Bash(\"D:\\\\RAFLY\\\\TPS\\\\PostgreSQL\\\\18\\\\bin\\\\psql.exe\" -h localhost -U postgres -d dashboard_alat -f \"d:\\\\RAFLY\\\\TPS\\\\dashboard-alat\\\\lib\\\\migrations\\\\004_create_temuan_rtg.sql\")",
+      "Bash(\"D:\\\\RAFLY\\\\TPS\\\\PostgreSQL\\\\18\\\\bin\\\\psql.exe\" -h localhost -U postgres -d dashboard_alat -c \"\\\\d temuan_rtg\")",
+      "Bash(\"D:\\\\RAFLY\\\\TPS\\\\PostgreSQL\\\\18\\\\bin\\\\psql.exe\" -h localhost -U postgres -d dashboard_alat -c \"SELECT table_name FROM information_schema.tables WHERE table_name = 'temuan_rtg';\")",
+      "Bash(PGPASSWORD=123111 \"D:\\\\RAFLY\\\\TPS\\\\PostgreSQL\\\\18\\\\bin\\\\psql.exe\" -h localhost -U postgres -d dashboard_alat -c \"\\\\d temuan_rtg\")",
+      "Bash(PGPASSWORD=123111 \"D:\\\\RAFLY\\\\TPS\\\\PostgreSQL\\\\18\\\\bin\\\\psql.exe\" -h localhost -U postgres -d dashboard_alat -c \"SELECT current_database\\(\\);\")",
+      "Bash(PGPASSWORD=123111 \"D:\\\\RAFLY\\\\TPS\\\\PostgreSQL\\\\18\\\\bin\\\\psql.exe\" -h localhost -U postgres -d dashboard_alat -c \"CREATE TABLE IF NOT EXISTS temuan_rtg \\(id UUID PRIMARY KEY DEFAULT gen_random_uuid\\(\\), rtg_unit_id UUID NOT NULL REFERENCES rtg_units\\(id\\) ON DELETE CASCADE, pelapor_id UUID NOT NULL REFERENCES users\\(id\\) ON DELETE CASCADE, tanggal_temuan DATE NOT NULL, waktu_temuan TIME NOT NULL, jenis_temuan VARCHAR\\(255\\) NOT NULL, deskripsi_temuan TEXT, foto JSONB DEFAULT '[]'::jsonb, status_temuan VARCHAR\\(50\\) NOT NULL DEFAULT 'DIPERIKSA', created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\\);\")",
+      "Bash(PGPASSWORD=123111 \"D:\\\\RAFLY\\\\TPS\\\\PostgreSQL\\\\18\\\\bin\\\\psql.exe\" -h localhost -U postgres -d dashboard_alat -c \"CREATE INDEX IF NOT EXISTS idx_temuan_rtg_tanggal ON temuan_rtg\\(tanggal_temuan DESC\\); CREATE INDEX IF NOT EXISTS idx_temuan_rtg_status ON temuan_rtg\\(status_temuan\\); CREATE INDEX IF NOT EXISTS idx_temuan_rtg_pelapor ON temuan_rtg\\(pelapor_id\\);\")",
+      "Bash(PGPASSWORD=123111 \"D:\\\\RAFLY\\\\TPS\\\\PostgreSQL\\\\18\\\\bin\\\\psql.exe\" -h localhost -U postgres -d dashboard_alat -c \"ALTER TABLE temuan_rtg ADD CONSTRAINT chk_status_temuan CHECK \\(status_temuan IN \\('DIPERIKSA', 'DITINDAKLANJUTI', 'SELESAI', 'DITUTUP'\\)\\);\")",
+      "Bash(curl -s http://localhost:3000/operator/lapor-temuan)",
+      "Bash(npm list:*)",
+      "Bash(pg_dump --version)",
+      "Read(//c/Program Files/**)",
+      "Read(//c//**)",
+      "Bash(powershell -Command \"if \\(Test-Path 'C:\\\\Users\\\\rosi\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--RAFLY-TPS-dashboard-alat\\\\b0098076-c9ac-4a98-9a4a-e8640bca2f1c\\\\tasks\\\\blr8alb0j.output'\\) { Get-Content 'C:\\\\Users\\\\rosi\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--RAFLY-TPS-dashboard-alat\\\\b0098076-c9ac-4a98-9a4a-e8640bca2f1c\\\\tasks\\\\blr8alb0j.output' } else { echo 'Not ready yet' }\")",
+      "Bash(node backup-database.js)",
+      "Bash(ls -lh \"d:/RAFLY/TPS/dashboard-alat/backup_before_redesign_\"*.sql)",
+      "Bash(dir \"d:\\\\RAFLY\\\\TPS\\\\dashboard-alat\\\\backup_before_redesign_*.sql\")",
+      "Bash(findstr /R \"backup_before_redesign\")",
+      "Bash(node backup-database-via-node.js)"
+    ]
+  }
+}
