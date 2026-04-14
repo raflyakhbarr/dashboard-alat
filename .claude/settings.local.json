@@ -29,7 +29,12 @@
       "Bash(ls -lh \"d:/RAFLY/TPS/dashboard-alat/backup_before_redesign_\"*.sql)",
       "Bash(dir \"d:\\\\RAFLY\\\\TPS\\\\dashboard-alat\\\\backup_before_redesign_*.sql\")",
       "Bash(findstr /R \"backup_before_redesign\")",
-      "Bash(node backup-database-via-node.js)"
+      "Bash(node backup-database-via-node.js)",
+      "Bash(ls -lh d:/RAFLY/TPS/dashboard-alat/backup_before_redesign_*.sql)",
+      "Bash(tasklist)",
+      "Bash(node -e \"const bcrypt = require\\('bcrypt'\\); console.log\\(bcrypt.hashSync\\('password123', 10\\)\\);\")",
+      "Bash(cp -r app/admin/rtg-groups/* app/operasional/rtg-groups/)",
+      "Bash(cp -r app/admin/rtg-units/* app/operasional/rtg-units/)"
     ]
   }
 }

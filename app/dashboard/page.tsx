@@ -39,10 +39,10 @@ export default async function DashboardPage() {
   }
 
   const roleDisplayNames: Record<string, string> = {
-    admin: 'Administrator',
-    operasional: 'Operasional',
-    mekanik: 'Mekanik',
-    operator: 'Operator',
+    operasional: 'Tim Operasional',
+    peralatan_terminal: 'Tim Peralatan Terminal',
+    perencanaan_persediaan: 'Tim Perencanaan Persediaan',
+    fasilitas: 'Tim Fasilitas',
   };
 
   // Get RTG statistics

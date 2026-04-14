@@ -51,48 +51,50 @@ export function AppSidebar({ user }: { user?: { nama: string; email: string; rol
       icon: <LayoutDashboardIcon className="h-4 w-4" />,
       isActive: pathname === "/dashboard",
     },
-    ...(user?.role === 'admin' ? [
+    ...(user?.role === 'operasional' ? [
       {
-        title: "Admin",
-        url: "/admin",
+        title: "Master Data",
+        url: "/operasional",
         icon: <Settings2Icon className="h-4 w-4" />,
-        isActive: pathname?.startsWith("/admin"),
+        isActive: pathname?.startsWith("/operasional/rtg-"),
         items: [
           {
             title: "RTG Groups",
-            url: "/admin/rtg-groups",
-            isActive: pathname === "/admin/rtg-groups",
+            url: "/operasional/rtg-groups",
+            isActive: pathname === "/operasional/rtg-groups",
           },
           {
             title: "RTG Units",
-            url: "/admin/rtg-units",
-            isActive: pathname === "/admin/rtg-units",
+            url: "/operasional/rtg-units",
+            isActive: pathname === "/operasional/rtg-units",
+          },
+        ],
+      },
+      {
+        title: "Laporan Kerusakan",
+        url: "/operasional/buat-laporan",
+        icon: <AlertTriangleIcon className="h-4 w-4" />,
+        isActive: pathname?.startsWith("/operasional/") && !pathname?.includes("/rtg-"),
+        items: [
+          {
+            title: "Buat Laporan",
+            url: "/operasional/buat-laporan",
+            isActive: pathname === "/operasional/buat-laporan",
+          },
+          {
+            title: "Daftar Laporan",
+            url: "/operasional/daftar-laporan",
+            isActive: pathname === "/operasional/daftar-laporan",
           },
         ],
       },
     ] : []),
-    ...(user?.role === 'operator' ? [
+    ...(user?.role === 'peralatan_terminal' || user?.role === 'perencanaan_persediaan' || user?.role === 'fasilitas' ? [
       {
-        title: "Lapor Temuan",
-        url: "/operator/temuan",
-        icon: <AlertTriangleIcon className="h-4 w-4" />,
-        isActive: pathname?.startsWith("/operator/temuan"),
-      },
-    ] : []),
-    ...(user?.role === 'operasional' ? [
-      {
-        title: "Input Status",
-        url: "/operasional/status-harian",
+        title: "Laporan Saya",
+        url: `/${user.role}/laporan`,
         icon: <ClipboardCheckIcon className="h-4 w-4" />,
-        isActive: pathname?.startsWith("/operasional/status-harian"),
-      },
-    ] : []),
-    ...(user?.role === 'mekanik' ? [
-      {
-        title: "Perbaikan",
-        url: "/mekanik/perbaikan",
-        icon: <WrenchIcon className="h-4 w-4" />,
-        isActive: pathname?.startsWith("/mekanik/perbaikan"),
+        isActive: pathname?.startsWith(`/${user.role}/laporan`),
       },
     ] : []),
   ]
