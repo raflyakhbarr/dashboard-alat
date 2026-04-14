@@ -1,6 +1,5 @@
 // RTG Status Enums
 export type StatusKondisiRTG = 'READY' | 'READY_CATATAN_RINGAN' | 'READY_CATATAN_BERAT' | 'TIDAK_READY';
-export type StatusTemuan = 'DIPERIKSA' | 'DITINDAKLANJUTI' | 'SELESAI' | 'DITUTUP';
 export type StatusPerbaikan = 'DALAM_PROSES' | 'SELESAI' | 'MENUNGGU_PART';
 
 // RTG Group
@@ -60,27 +59,44 @@ export interface RTGUnitWithGroup {
   updated_at: Date;
 }
 
-// Temuan RTG
-export interface TemuanRTG {
+// Laporan Kerusakan Types
+export type StatusKerusakan = 'DIPERIKSA' | 'DITINDAKLANJUTI' | 'SELESAI';
+export type DitugaskanKe = 'peralatan_terminal' | 'perencanaan_persediaan' | 'fasilitas';
+
+export interface LaporanKerusakan {
   id: string;
   rtg_unit_id: string;
-  pelapor_id: string;
-  tanggal_temuan: string;  // Changed from Date to string for ISO format
-  waktu_temuan: string;
-  jenis_temuan: string;
-  deskripsi_temuan: string | null;  // Changed from required to nullable
-  foto: string[];  // Changed from foto_1, foto_2, foto_3 to array
-  status_temuan: StatusTemuan;
-  created_at: string;  // Changed from Date to string
+  dilaporkan_oleh: string;
+  nama_pelapor: string;
+  email_pelapor: string | null;
+  ditugaskan_ke: DitugaskanKe;
+  tanggal_laporan: string;
+  waktu_laporan: string;
+  jenis_kerusakan: string;
+  deskripsi: string | null;
+  foto_laporan: string[];
+  status_kerusakan: StatusKerusakan;
+  created_at: string;
 }
 
-export interface TemuanRTGInput {
+export interface LaporanKerusakanWithDetails extends LaporanKerusakan {
+  rtg_unit: {
+    kode_rtg: string;
+    nama_rtg: string;
+  };
+}
+
+export interface LaporanKerusakanInput {
   rtg_unit_id: string;
-  tanggal_temuan: string;
-  waktu_temuan: string;
-  jenis_temuan: string;
-  deskripsi_temuan?: string;  // Optional
-  foto?: string[];  // Changed from foto_1, foto_2, foto_3 to array
+  dilaporkan_oleh: string;
+  nama_pelapor: string;
+  email_pelapor?: string;
+  ditugaskan_ke: DitugaskanKe;
+  tanggal_laporan: string;
+  waktu_laporan: string;
+  jenis_kerusakan: string;
+  deskripsi?: string;
+  foto_laporan?: string[];
 }
 
 // Status Harian RTG
@@ -150,35 +166,53 @@ export interface DashboardStats {
   tidak_ready: number;
 }
 
-// ============= TEMUAN RTG TYPES =============
+// ============= LAPORAN KERUSAKAN TYPES =============
 
-export interface TemuanRTGWithDetails {
-  id: string;
-  rtg_unit_id: string;
-  pelapor_id: string;
-  tanggal_temuan: string;
-  waktu_temuan: string;
-  jenis_temuan: string;
-  deskripsi_temuan: string | null;
-  foto: string[];
-  status_temuan: StatusTemuan;
-  created_at: string;
-  rtg_unit: {
-    kode_rtg: string;
-    nama_rtg: string;
-  };
-  pelapor: {
-    nama: string;
-    email: string;
-  };
-}
-
-export const StatusTemuanLabels: Record<StatusTemuan, string> = {
+export const StatusKerusakanLabels: Record<StatusKerusakan, string> = {
   DIPERIKSA: 'Diperiksa',
   DITINDAKLANJUTI: 'Ditindaklanjuti',
   SELESAI: 'Selesai',
-  DITUTUP: 'Ditutup',
 };
+
+export const DitugaskanKeLabels: Record<DitugaskanKe, string> = {
+  peralatan_terminal: 'Peralatan Terminal',
+  perencanaan_persediaan: 'Perencanaan Persediaan',
+  fasilitas: 'Fasilitas',
+};
+
+// Penindaklanjut Kerusakan Types
+export interface PenindaklanjutKerusakan {
+  id: string;
+  laporan_kerusakan_id: string;
+  ditangani_oleh_id: string;
+  tanggal_selesai: string;
+  deskripsi_tindakan: string;
+  foto_bukti: string[];
+  created_at: string;
+}
+
+export interface PenindaklanjutKerusakanInput {
+  laporan_kerusakan_id: string;
+  ditangani_oleh_id: string;
+  tanggal_selesai: string;
+  deskripsi_tindakan: string;
+  foto_bukti: string[];
+}
+
+export interface PenindaklanjutKerusakanWithDetails extends PenindaklanjutKerusakan {
+  laporan_kerusakan: {
+    jenis_kerusakan: string;
+    rtg_unit: {
+      kode_rtg: string;
+      nama_rtg: string;
+    };
+  };
+  ditangani_oleh: {
+    nama: string;
+    email: string;
+    role: string;
+  };
+}
 
 // Status display names
 export const StatusKondisiLabels: Record<StatusKondisiRTG, string> = {
