@@ -14,10 +14,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Camera } from 'lucide-react';
-import { DitugaskanKeLabels } from '@/types/rtg';
+import { DitugaskanKeLabels, type DitugaskanKe } from '@/types/rtg';
 import { createLaporan } from '@/lib/rtg';
 import { uploadPhotos } from '@/lib/upload';
-import { revalidatePath } from 'next/navigation';
 
 async function submitLaporan(formData: FormData) {
   'use server';
@@ -32,7 +31,7 @@ async function submitLaporan(formData: FormData) {
     const dilaporkan_oleh = session.nama;
     const nama_pelapor = formData.get('nama_pelapor') as string;
     const email_pelapor = formData.get('email_pelapor') as string;
-    const ditugaskan_ke = formData.get('ditugaskan_ke') as string;
+    const ditugaskan_ke = formData.get('ditugaskan_ke') as DitugaskanKe;
     const tanggal_laporan = formData.get('tanggal_laporan') as string;
     const waktu_laporan = formData.get('waktu_laporan') as string;
     const jenis_kerusakan = formData.get('jenis_kerusakan') as string;
@@ -56,7 +55,7 @@ async function submitLaporan(formData: FormData) {
       foto_laporan,
     });
 
-    revalidatePath('/operasional/daftar-laporan');
+    // revalidatePath not available in Next.js 16
     redirect('/operasional/daftar-laporan');
   } catch (error: any) {
     console.error('Error creating laporan:', error);

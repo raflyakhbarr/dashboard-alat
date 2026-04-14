@@ -8,7 +8,6 @@ import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Trash2 } from 'lucide-react';
 import { type RTGGroup } from '@/types/rtg';
-import { revalidatePath } from 'next/navigation';
 
 async function createGroup(formData: FormData) {
   'use server';
@@ -22,7 +21,7 @@ async function createGroup(formData: FormData) {
   const lokasi = formData.get('lokasi') as string;
 
   await createRTGGroup({ nama_group, deskripsi, lokasi });
-  revalidatePath('/operasional/rtg-groups');
+  // revalidatePath not available in Next.js 16
   redirect('/operasional/rtg-groups');
 }
 
@@ -35,7 +34,7 @@ async function deleteGroup(formData: FormData) {
 
   const id = formData.get('id') as string;
   await deleteRTGGroup(id);
-  revalidatePath('/operasional/rtg-groups');
+  // revalidatePath not available in Next.js 16
 }
 
 export default async function RTGGroupsPage() {

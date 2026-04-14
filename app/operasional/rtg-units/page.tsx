@@ -27,7 +27,6 @@ import {
 } from "@/components/ui/table";
 import { Trash2 } from 'lucide-react';
 import { StatusKondisiLabels, type StatusKondisiRTG } from '@/types/rtg';
-import { revalidatePath } from 'next/navigation';
 
 async function createUnit(formData: FormData) {
   'use server';
@@ -55,7 +54,7 @@ async function createUnit(formData: FormData) {
     spesifikasi,
     status_kondisi,
   });
-  revalidatePath('/operasional/rtg-units');
+  // revalidatePath not available in Next.js 16
   redirect('/operasional/rtg-units');
 }
 
@@ -68,7 +67,7 @@ async function deleteUnit(formData: FormData) {
 
   const id = formData.get('id') as string;
   await deleteRTGUnit(id);
-  revalidatePath('/operasional/rtg-units');
+  // revalidatePath not available in Next.js 16
 }
 
 export default async function RTGUnitsPage() {

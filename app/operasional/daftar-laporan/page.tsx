@@ -14,7 +14,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from '@/components/ui/button';
 import { AlertTriangle } from 'lucide-react';
 import { StatusKerusakan, StatusKerusakanLabels, DitugaskanKeLabels } from '@/types/rtg';
-import { revalidatePath } from 'next/navigation';
 
 const statusColors: Record<StatusKerusakan, string> = {
   DIPERIKSA: 'bg-yellow-100 text-yellow-800 border-yellow-200',
@@ -27,7 +26,7 @@ async function updateStatus(formData: FormData) {
   const id = formData.get('id') as string;
   const status = formData.get('status') as StatusKerusakan;
   await updateLaporanStatus(id, status);
-  revalidatePath('/operasional/daftar-laporan');
+  // revalidatePath not available in Next.js 16
 }
 
 export default async function DaftarLaporanPage() {
