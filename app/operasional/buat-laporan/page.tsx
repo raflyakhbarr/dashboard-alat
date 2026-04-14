@@ -118,7 +118,7 @@ export default async function BuatLaporanPage() {
             <h1 className="text-2xl font-bold">Buat Laporan Kerusakan</h1>
           </div>
 
-      <Card className="max-w-3xl">
+      <Card>
         <CardHeader>
           <CardTitle>Form Laporan Kerusakan</CardTitle>
           <CardDescription>
@@ -127,100 +127,113 @@ export default async function BuatLaporanPage() {
         </CardHeader>
         <CardContent>
           <form action={submitLaporan} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="rtg_unit_id">RTG Unit *</Label>
-              <Select name="rtg_unit_id" required>
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih RTG Unit" />
-                </SelectTrigger>
-                <SelectContent>
-                  {rtgUnits.map((unit) => (
-                    <SelectItem key={unit.id} value={unit.id}>
-                      {unit.kode_rtg} - {unit.nama_rtg}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            {/* Row 1: RTG Unit & Ditugaskan Ke */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="rtg_unit_id">RTG Unit *</Label>
+                <Select name="rtg_unit_id" required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih RTG Unit" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {rtgUnits.map((unit) => (
+                      <SelectItem key={unit.id} value={unit.id}>
+                        {unit.kode_rtg} - {unit.nama_rtg}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="ditugaskan_ke">Ditugaskan Ke *</Label>
+                <Select name="ditugaskan_ke" required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih Tim" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="peralatan_terminal">Peralatan Terminal</SelectItem>
+                    <SelectItem value="perencanaan_persediaan">Perencanaan Persediaan</SelectItem>
+                    <SelectItem value="fasilitas">Fasilitas</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="ditugaskan_ke">Ditugaskan Ke *</Label>
-              <Select name="ditugaskan_ke" required>
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih Tim" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="peralatan_terminal">Peralatan Terminal</SelectItem>
-                  <SelectItem value="perencanaan_persediaan">Perencanaan Persediaan</SelectItem>
-                  <SelectItem value="fasilitas">Fasilitas</SelectItem>
-                </SelectContent>
-              </Select>
+            {/* Row 2: Nama Pelapor & Email Pelapor */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="nama_pelapor">Nama Pelapor *</Label>
+                <Input
+                  type="text"
+                  id="nama_pelapor"
+                  name="nama_pelapor"
+                  placeholder="Nama pelapor"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email_pelapor">Email Pelapor</Label>
+                <Input
+                  type="email"
+                  id="email_pelapor"
+                  name="email_pelapor"
+                  placeholder="email@contoh.com"
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="nama_pelapor">Nama Pelapor *</Label>
-              <Input
-                type="text"
-                id="nama_pelapor"
-                name="nama_pelapor"
-                placeholder="Nama pelapor"
-                required
-              />
+            {/* Row 3: Tanggal & Waktu Laporan */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="tanggal_laporan">Tanggal Laporan *</Label>
+                <Input
+                  type="date"
+                  id="tanggal_laporan"
+                  name="tanggal_laporan"
+                  defaultValue={today}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="waktu_laporan">Waktu Laporan *</Label>
+                <Input
+                  type="time"
+                  id="waktu_laporan"
+                  name="waktu_laporan"
+                  defaultValue={currentTime}
+                  required
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email_pelapor">Email Pelapor</Label>
-              <Input
-                type="email"
-                id="email_pelapor"
-                name="email_pelapor"
-                placeholder="email@contoh.com"
-              />
+            {/* Row 4: Jenis Kerusakan & Deskripsi */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="jenis_kerusakan">Jenis Kerusakan *</Label>
+                <Input
+                  type="text"
+                  id="jenis_kerusakan"
+                  name="jenis_kerusakan"
+                  placeholder="Contoh: Ban bocor, Kaca retak, Kursi rusak"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="deskripsi">Deskripsi</Label>
+                <Textarea
+                  id="deskripsi"
+                  name="deskripsi"
+                  placeholder="Jelaskan detail kerusakan..."
+                  rows={3}
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="tanggal_laporan">Tanggal Laporan *</Label>
-              <Input
-                type="date"
-                id="tanggal_laporan"
-                name="tanggal_laporan"
-                defaultValue={today}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="waktu_laporan">Waktu Laporan *</Label>
-              <Input
-                type="time"
-                id="waktu_laporan"
-                name="waktu_laporan"
-                defaultValue={currentTime}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="jenis_kerusakan">Jenis Kerusakan *</Label>
-              <Input
-                type="text"
-                id="jenis_kerusakan"
-                name="jenis_kerusakan"
-                placeholder="Contoh: Ban bocor, Kaca retak, Kursi rusak"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="deskripsi">Deskripsi</Label>
-              <Textarea
-                id="deskripsi"
-                name="deskripsi"
-                placeholder="Jelaskan detail kerusakan..."
-                rows={4}
-              />
-            </div>
-
+            {/* Row 5: Foto */}
             <div className="space-y-2">
               <Label htmlFor="foto_laporan">Foto (Opsional)</Label>
               <Input
