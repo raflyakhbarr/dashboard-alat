@@ -7,10 +7,14 @@ import {
   RTGUnitWithGroup,
   StatusKondisiRTG,
   DashboardStats,
-  TemuanRTG,
-  TemuanRTGWithDetails,
-  TemuanRTGInput,
-  StatusTemuan,
+  LaporanKerusakan,
+  LaporanKerusakanWithDetails,
+  LaporanKerusakanInput,
+  StatusKerusakan,
+  DitugaskanKe,
+  PenindaklanjutKerusakan,
+  PenindaklanjutKerusakanInput,
+  PenindaklanjutKerusakanWithDetails,
 } from '@/types/rtg';
 
 // ============= RTG GROUPS =============
@@ -276,126 +280,116 @@ export async function getRTGUnitsByStatus(status: StatusKondisiRTG): Promise<RTG
   }));
 }
 
-// ============= TEMUAN RTG =============
+// ============= LAPORAN KERUSAKAN =============
 
-function mapTemuanRow(row: any): TemuanRTGWithDetails {
+function mapLaporanRow(row: any): LaporanKerusakanWithDetails {
   return {
     id: row.id,
     rtg_unit_id: row.rtg_unit_id,
-    pelapor_id: row.pelapor_id,
-    tanggal_temuan: row.tanggal_temuan,
-    waktu_temuan: row.waktu_temuan,
-    jenis_temuan: row.jenis_temuan,
-    deskripsi_temuan: row.deskripsi_temuan,
-    foto: row.foto || [],
-    status_temuan: row.status_temuan,
+    dilaporkan_oleh: row.dilaporkan_oleh,
+    nama_pelapor: row.nama_pelapor,
+    email_pelapor: row.email_pelapor,
+    ditugaskan_ke: row.ditugaskan_ke,
+    tanggal_laporan: row.tanggal_laporan,
+    waktu_laporan: row.waktu_laporan,
+    jenis_kerusakan: row.jenis_kerusakan,
+    deskripsi: row.deskripsi,
+    foto_laporan: row.foto_laporan || [],
+    status_kerusakan: row.status_kerusakan,
     created_at: row.created_at,
     rtg_unit: {
       kode_rtg: row.kode_rtg,
       nama_rtg: row.nama_rtg,
     },
-    pelapor: {
-      nama: row.pelapor_nama,
-      email: row.pelapor_email,
-    },
   };
 }
 
-export async function getAllTemuan(): Promise<TemuanRTGWithDetails[]> {
+export async function getAllLaporan(): Promise<LaporanKerusakanWithDetails[]> {
   const result = await pool.query(`
     SELECT
-      t.*,
+      l.*,
       u.kode_rtg,
-      u.nama_rtg,
-      p.nama as pelapor_nama,
-      p.email as pelapor_email
-    FROM temuan_rtg t
-    LEFT JOIN rtg_units u ON t.rtg_unit_id = u.id
-    LEFT JOIN users p ON t.pelapor_id = p.id
-    ORDER BY t.tanggal_temuan DESC, t.waktu_temuan DESC
+      u.nama_rtg
+    FROM laporan_kerusakan l
+    LEFT JOIN rtg_units u ON l.rtg_unit_id = u.id
+    ORDER BY l.tanggal_laporan DESC, l.waktu_laporan DESC
   `);
 
-  return result.rows.map(mapTemuanRow);
+  return result.rows.map(mapLaporanRow);
 }
 
-export async function getTemuanById(id: string): Promise<TemuanRTGWithDetails | null> {
+export async function getLaporanById(id: string): Promise<LaporanKerusakanWithDetails | null> {
   const result = await pool.query(`
     SELECT
-      t.*,
+      l.*,
       u.kode_rtg,
-      u.nama_rtg,
-      p.nama as pelapor_nama,
-      p.email as pelapor_email
-    FROM temuan_rtg t
-    LEFT JOIN rtg_units u ON t.rtg_unit_id = u.id
-    LEFT JOIN users p ON t.pelapor_id = p.id
-    WHERE t.id = $1
+      u.nama_rtg
+    FROM laporan_kerusakan l
+    LEFT JOIN rtg_units u ON l.rtg_unit_id = u.id
+    WHERE l.id = $1
   `, [id]);
 
   if (result.rows.length === 0) return null;
 
-  return mapTemuanRow(result.rows[0]);
+  return mapLaporanRow(result.rows[0]);
 }
 
-export async function getTemuanByPelapor(pelaporId: string): Promise<TemuanRTGWithDetails[]> {
+export async function getLaporanByDitugaskan(ditugaskanKe: DitugaskanKe): Promise<LaporanKerusakanWithDetails[]> {
   const result = await pool.query(`
     SELECT
-      t.*,
+      l.*,
       u.kode_rtg,
-      u.nama_rtg,
-      p.nama as pelapor_nama,
-      p.email as pelapor_email
-    FROM temuan_rtg t
-    LEFT JOIN rtg_units u ON t.rtg_unit_id = u.id
-    LEFT JOIN users p ON t.pelapor_id = p.id
-    WHERE t.pelapor_id = $1
-    ORDER BY t.tanggal_temuan DESC, t.waktu_temuan DESC
-  `, [pelaporId]);
+      u.nama_rtg
+    FROM laporan_kerusakan l
+    LEFT JOIN rtg_units u ON l.rtg_unit_id = u.id
+    WHERE l.ditugaskan_ke = $1
+    ORDER BY l.tanggal_laporan DESC, l.waktu_laporan DESC
+  `, [ditugaskanKe]);
 
-  return result.rows.map(mapTemuanRow);
+  return result.rows.map(mapLaporanRow);
 }
 
-export async function getTemuanByStatus(status: StatusTemuan): Promise<TemuanRTGWithDetails[]> {
+export async function getLaporanByStatus(status: StatusKerusakan): Promise<LaporanKerusakanWithDetails[]> {
   const result = await pool.query(`
     SELECT
-      t.*,
+      l.*,
       u.kode_rtg,
-      u.nama_rtg,
-      p.nama as pelapor_nama,
-      p.email as pelapor_email
-    FROM temuan_rtg t
-    LEFT JOIN rtg_units u ON t.rtg_unit_id = u.id
-    LEFT JOIN users p ON t.pelapor_id = p.id
-    WHERE t.status_temuan = $1
-    ORDER BY t.tanggal_temuan DESC, t.waktu_temuan DESC
+      u.nama_rtg
+    FROM laporan_kerusakan l
+    LEFT JOIN rtg_units u ON l.rtg_unit_id = u.id
+    WHERE l.status_kerusakan = $1
+    ORDER BY l.tanggal_laporan DESC, l.waktu_laporan DESC
   `, [status]);
 
-  return result.rows.map(mapTemuanRow);
+  return result.rows.map(mapLaporanRow);
 }
 
-export async function createTemuan(input: TemuanRTGInput & { pelapor_id: string }): Promise<TemuanRTG> {
+export async function createLaporan(input: LaporanKerusakanInput): Promise<LaporanKerusakan> {
   const {
     rtg_unit_id,
-    pelapor_id,
-    tanggal_temuan,
-    waktu_temuan,
-    jenis_temuan,
-    deskripsi_temuan,
-    foto = [],
+    dilaporkan_oleh,
+    nama_pelapor,
+    email_pelapor,
+    ditugaskan_ke,
+    tanggal_laporan,
+    waktu_laporan,
+    jenis_kerusakan,
+    deskripsi,
+    foto_laporan = [],
   } = input;
 
   const result = await pool.query(
-    `INSERT INTO temuan_rtg (rtg_unit_id, pelapor_id, tanggal_temuan, waktu_temuan, jenis_temuan, deskripsi_temuan, foto)
-     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-    [rtg_unit_id, pelapor_id, tanggal_temuan, waktu_temuan, jenis_temuan, deskripsi_temuan || null, JSON.stringify(foto)]
+    `INSERT INTO laporan_kerusakan (rtg_unit_id, dilaporkan_oleh, nama_pelapor, email_pelapor, ditugaskan_ke, tanggal_laporan, waktu_laporan, jenis_kerusakan, deskripsi, foto_laporan)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+    [rtg_unit_id, dilaporkan_oleh, nama_pelapor, email_pelapor || null, ditugaskan_ke, tanggal_laporan, waktu_laporan, jenis_kerusakan, deskripsi || null, JSON.stringify(foto_laporan)]
   );
 
   return result.rows[0];
 }
 
-export async function updateTemuanStatus(id: string, status: StatusTemuan): Promise<TemuanRTG | null> {
+export async function updateLaporanStatus(id: string, status: StatusKerusakan): Promise<LaporanKerusakan | null> {
   const result = await pool.query(
-    'UPDATE temuan_rtg SET status_temuan = $1 WHERE id = $2 RETURNING *',
+    'UPDATE laporan_kerusakan SET status_kerusakan = $1 WHERE id = $2 RETURNING *',
     [status, id]
   );
 
@@ -403,30 +397,134 @@ export async function updateTemuanStatus(id: string, status: StatusTemuan): Prom
   return result.rows[0];
 }
 
-export async function deleteTemuan(id: string): Promise<boolean> {
-  const result = await pool.query('DELETE FROM temuan_rtg WHERE id = $1', [id]);
+export async function deleteLaporan(id: string): Promise<boolean> {
+  const result = await pool.query('DELETE FROM laporan_kerusakan WHERE id = $1', [id]);
   return (result.rowCount || 0) > 0;
 }
 
-export async function getTemuanCountByStatus(): Promise<Record<StatusTemuan, number>> {
+export async function getLaporanCountByStatus(): Promise<Record<StatusKerusakan, number>> {
   const result = await pool.query(`
     SELECT
-      status_temuan,
+      status_kerusakan,
       COUNT(*) as count
-    FROM temuan_rtg
-    GROUP BY status_temuan
+    FROM laporan_kerusakan
+    GROUP BY status_kerusakan
   `);
 
   const counts: Record<string, number> = {
     DIPERIKSA: 0,
     DITINDAKLANJUTI: 0,
     SELESAI: 0,
-    DITUTUP: 0,
   };
 
   result.rows.forEach((row: any) => {
-    counts[row.status_temuan] = parseInt(row.count);
+    counts[row.status_kerusakan] = parseInt(row.count);
   });
 
-  return counts as Record<StatusTemuan, number>;
+  return counts as Record<StatusKerusakan, number>;
+}
+
+// ============= PENINDAKLANJUT KERUSAKAN =============
+
+export async function createPenindaklanjut(input: PenindaklanjutKerusakanInput): Promise<PenindaklanjutKerusakan> {
+  const {
+    laporan_kerusakan_id,
+    ditangani_oleh_id,
+    tanggal_selesai,
+    deskripsi_tindakan,
+    foto_bukti,
+  } = input;
+
+  const result = await pool.query(
+    `INSERT INTO penindaklanjut_kerusakan (laporan_kerusakan_id, ditangani_oleh_id, tanggal_selesai, deskripsi_tindakan, foto_bukti)
+     VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+    [laporan_kerusakan_id, ditangani_oleh_id, tanggal_selesai, deskripsi_tindakan, JSON.stringify(foto_bukti)]
+  );
+
+  // Update laporan status to SELESAI
+  await updateLaporanStatus(laporan_kerusakan_id, 'SELESAI');
+
+  return result.rows[0];
+}
+
+export async function getPenindaklanjutByLaporan(laporanId: string): Promise<PenindaklanjutKerusakanWithDetails[]> {
+  const result = await pool.query(`
+    SELECT
+      p.*,
+      l.jenis_kerusakan,
+      u.kode_rtg,
+      u.nama_rtg as unit_rtg,
+      usr.nama as penangan_nama,
+      usr.email as penangan_email,
+      usr.role as penangan_role
+    FROM penindaklanjut_kerusakan p
+    LEFT JOIN laporan_kerusakan l ON p.laporan_kerusakan_id = l.id
+    LEFT JOIN rtg_units u ON l.rtg_unit_id = u.id
+    LEFT JOIN users usr ON p.ditangani_oleh_id = usr.id
+    WHERE p.laporan_kerusakan_id = $1
+    ORDER BY p.created_at DESC
+  `, [laporanId]);
+
+  return result.rows.map((row: any) => ({
+    id: row.id,
+    laporan_kerusakan_id: row.laporan_kerusakan_id,
+    ditangani_oleh_id: row.ditangani_oleh_id,
+    tanggal_selesai: row.tanggal_selesai,
+    deskripsi_tindakan: row.deskripsi_tindakan,
+    foto_bukti: row.foto_bukti,
+    created_at: row.created_at,
+    laporan_kerusakan: {
+      jenis_kerusakan: row.jenis_kerusakan,
+      rtg_unit: {
+        kode_rtg: row.kode_rtg,
+        nama_rtg: row.unit_rtg,
+      },
+    },
+    ditangani_oleh: {
+      nama: row.penangan_nama,
+      email: row.penangan_email,
+      role: row.penangan_role,
+    },
+  }));
+}
+
+export async function getPenindaklanjutByUser(userId: string): Promise<PenindaklanjutKerusakanWithDetails[]> {
+  const result = await pool.query(`
+    SELECT
+      p.*,
+      l.jenis_kerusakan,
+      u.kode_rtg,
+      u.nama_rtg as unit_rtg,
+      usr.nama as penangan_nama,
+      usr.email as penangan_email,
+      usr.role as penangan_role
+    FROM penindaklanjut_kerusakan p
+    LEFT JOIN laporan_kerusakan l ON p.laporan_kerusakan_id = l.id
+    LEFT JOIN rtg_units u ON l.rtg_unit_id = u.id
+    LEFT JOIN users usr ON p.ditangani_oleh_id = usr.id
+    WHERE p.ditangani_oleh_id = $1
+    ORDER BY p.created_at DESC
+  `, [userId]);
+
+  return result.rows.map((row: any) => ({
+    id: row.id,
+    laporan_kerusakan_id: row.laporan_kerusakan_id,
+    ditangani_oleh_id: row.ditangani_oleh_id,
+    tanggal_selesai: row.tanggal_selesai,
+    deskripsi_tindakan: row.deskripsi_tindakan,
+    foto_bukti: row.foto_bukti,
+    created_at: row.created_at,
+    laporan_kerusakan: {
+      jenis_kerusakan: row.jenis_kerusakan,
+      rtg_unit: {
+        kode_rtg: row.kode_rtg,
+        nama_rtg: row.unit_rtg,
+      },
+    },
+    ditangani_oleh: {
+      nama: row.penangan_nama,
+      email: row.penangan_email,
+      role: row.penangan_role,
+    },
+  }));
 }
