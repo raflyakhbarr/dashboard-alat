@@ -18,6 +18,21 @@ import { DitugaskanKeLabels, type DitugaskanKe } from '@/types/rtg';
 import Link from 'next/link';
 import { createLaporan } from '@/lib/rtg';
 import { uploadPhotos } from '@/lib/upload';
+import { AppSidebar } from "@/components/app-sidebar"
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
+import { Separator } from "@/components/ui/separator"
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar"
 
 async function submitLaporan(formData: FormData) {
   'use server';
@@ -76,11 +91,32 @@ export default async function BuatLaporanPage() {
   const currentTime = now.toTimeString().slice(0, 5);
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 pt-6">
-      <div className="flex items-center gap-2">
-        <Camera className="h-6 w-6" />
-        <h1 className="text-2xl font-bold">Buat Laporan Kerusakan</h1>
-      </div>
+    <SidebarProvider>
+      <AppSidebar user={{ nama: session.nama, email: session.email, role: session.role }} />
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2">
+          <div className="flex items-center gap-2 px-4 w-full">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="mr-2 h-4" />
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>Buat Laporan</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+          </div>
+        </header>
+
+        <div className="flex flex-1 flex-col gap-4 p-4 pt-6">
+          <div className="flex items-center gap-2">
+            <Camera className="h-6 w-6" />
+            <h1 className="text-2xl font-bold">Buat Laporan Kerusakan</h1>
+          </div>
 
       <Card className="max-w-3xl">
         <CardHeader>
@@ -214,5 +250,7 @@ export default async function BuatLaporanPage() {
         </CardContent>
       </Card>
     </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

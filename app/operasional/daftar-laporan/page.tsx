@@ -14,6 +14,21 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from '@/components/ui/button';
 import { AlertTriangle } from 'lucide-react';
 import { StatusKerusakan, StatusKerusakanLabels, DitugaskanKeLabels } from '@/types/rtg';
+import { AppSidebar } from "@/components/app-sidebar"
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
+import { Separator } from "@/components/ui/separator"
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar"
 
 const statusColors: Record<StatusKerusakan, string> = {
   DIPERIKSA: 'bg-yellow-100 text-yellow-800 border-yellow-200',
@@ -38,11 +53,32 @@ export default async function DaftarLaporanPage() {
   const laporanList = await getAllLaporan();
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 pt-6">
-      <div className="flex items-center gap-2">
-        <AlertTriangle className="h-6 w-6" />
-        <h1 className="text-2xl font-bold">Daftar Semua Laporan</h1>
-      </div>
+    <SidebarProvider>
+      <AppSidebar user={{ nama: session.nama, email: session.email, role: session.role }} />
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2">
+          <div className="flex items-center gap-2 px-4 w-full">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="mr-2 h-4" />
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>Daftar Laporan</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+          </div>
+        </header>
+
+        <div className="flex flex-1 flex-col gap-4 p-4 pt-6">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-6 w-6" />
+            <h1 className="text-2xl font-bold">Daftar Semua Laporan</h1>
+          </div>
 
       <Card>
         <CardHeader>
@@ -118,5 +154,7 @@ export default async function DaftarLaporanPage() {
         </CardContent>
       </Card>
     </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
