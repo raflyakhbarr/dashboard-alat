@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Camera } from 'lucide-react';
 import { DitugaskanKeLabels, type DitugaskanKe } from '@/types/rtg';
+import Link from 'next/link';
 import { createLaporan } from '@/lib/rtg';
 import { uploadPhotos } from '@/lib/upload';
 
@@ -203,13 +204,11 @@ export default async function BuatLaporanPage() {
               <Button type="submit" className="flex-1">
                 Submit Laporan
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => window.history.back()}
-              >
-                Batal
-              </Button>
+              <Link href="/operasional/daftar-laporan">
+                <Button type="button" variant="outline">
+                  Batal
+                </Button>
+              </Link>
             </div>
           </form>
         </CardContent>
