@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Camera } from 'lucide-react';
-import { DitugaskanKeLabels, type DitugaskanKe } from '@/types/rtg';
+import { PenindakLanjutLabels, type PenindakLanjut } from '@/types/rtg';
 import Link from 'next/link';
 import { createLaporan } from '@/lib/rtg';
 import { uploadPhotos } from '@/lib/upload';
@@ -47,7 +47,7 @@ async function submitLaporan(formData: FormData) {
     const dilaporkan_oleh = session.nama;
     const nama_pelapor = formData.get('nama_pelapor') as string;
     const email_pelapor = formData.get('email_pelapor') as string;
-    const ditugaskan_ke = formData.get('ditugaskan_ke') as DitugaskanKe;
+    const penindak_lanjut = formData.get('penindak_lanjut') as PenindakLanjut;
     const tanggal_laporan = formData.get('tanggal_laporan') as string;
     const waktu_laporan = formData.get('waktu_laporan') as string;
     const jenis_kerusakan = formData.get('jenis_kerusakan') as string;
@@ -63,7 +63,7 @@ async function submitLaporan(formData: FormData) {
       dilaporkan_oleh,
       nama_pelapor,
       email_pelapor,
-      ditugaskan_ke,
+      penindak_lanjut,
       tanggal_laporan,
       waktu_laporan,
       jenis_kerusakan,
@@ -146,8 +146,8 @@ export default async function BuatLaporanPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="ditugaskan_ke">Ditugaskan Ke *</Label>
-                <Select name="ditugaskan_ke" required>
+                <Label htmlFor="penindak_lanjut">Penindak Lanjut *</Label>
+                <Select name="penindak_lanjut" required>
                   <SelectTrigger>
                     <SelectValue placeholder="Pilih Tim" />
                   </SelectTrigger>

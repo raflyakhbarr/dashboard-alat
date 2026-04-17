@@ -90,17 +90,11 @@ export default function LoginPage() {
             </p>
           </div>
         </CardContent>
-        <CardFooter className="flex flex-col">
+        {/* <CardFooter className="flex flex-col">
           <div className="w-full p-4 bg-muted/50 rounded-lg">
             <p className="text-xs font-semibold mb-2">Akun Demo:</p>
-            <div className="space-y-1 text-xs text-muted-foreground">
-              <p>• admin@dashboard.com / admin123 (Administrator)</p>
-              <p>• operasional@dashboard.com / oper123 (Operasional)</p>
-              <p>• mekanik@dashboard.com / mekanik123 (Mekanik)</p>
-              <p>• operator@dashboard.com / operator123 (Operator)</p>
-            </div>
           </div>
-        </CardFooter>
+        </CardFooter> */}
       </Card>
     </div>
   );

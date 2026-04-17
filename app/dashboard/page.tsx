@@ -17,10 +17,9 @@ import { getSession } from '@/lib/auth';
 import { logout } from '@/app/dashboard/actions';
 import { Button } from '@/components/ui/button';
 import { getDashboardStats, getAllRTGUnits } from '@/lib/rtg';
-import { StatusKondisiLabels, StatusKondisiColors, type DashboardStats, type RTGUnitWithGroup } from '@/types/rtg';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CheckCircle2, AlertCircle, AlertTriangle, XCircle, Wrench } from 'lucide-react';
-import Link from 'next/link';
+import { RTGUnitsTable } from './rtg-units-table';
 
 export default async function DashboardPage() {
   const session = await getSession();
@@ -159,8 +158,8 @@ export default async function DashboardPage() {
             </Card>
           </div>
 
-          {/* RTG Units List */}
-          <div className="min-h-[100vh] flex-1 rounded-xl bg-muted/50 md:min-h-min p-6">
+          {/* RTG Units Table */}
+          <div className="rounded-xl bg-muted/50 p-6">
             <div className="mb-6">
               <h2 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50 mb-2">
                 Status RTG Units
@@ -170,55 +169,7 @@ export default async function DashboardPage() {
               </p>
             </div>
 
-            <div className="grid gap-4">
-              {rtgUnits.map((unit) => (
-                <Card key={unit.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                            {unit.kode_rtg}
-                          </h3>
-                          <span
-                            className={`px-3 py-1 rounded-full text-xs font-medium ${StatusKondisiColors[unit.status_kondisi]}`}
-                          >
-                            {StatusKondisiLabels[unit.status_kondisi]}
-                          </span>
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                          <div>
-                            <p className="text-muted-foreground">Nama Unit</p>
-                            <p className="font-medium text-zinc-900 dark:text-zinc-50">{unit.nama_rtg}</p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground">Group</p>
-                            <p className="font-medium text-zinc-900 dark:text-zinc-50">
-                              {unit.group_rtg?.nama_group || '-'}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground">Kapasitas</p>
-                            <p className="font-medium text-zinc-900 dark:text-zinc-50">
-                              {unit.kapasitas ? `${unit.kapasitas} Ton` : '-'}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground">Manufacturer</p>
-                            <p className="font-medium text-zinc-900 dark:text-zinc-50">
-                              {unit.manufacturer || '-'}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="ml-4 text-right text-xs text-muted-foreground">
-                        <p>Updated: {new Date(unit.updated_at).toLocaleDateString('id-ID')}</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            <RTGUnitsTable rtgUnits={rtgUnits} />
           </div>
         </div>
       </SidebarInset>

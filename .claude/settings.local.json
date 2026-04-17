@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -n \"= \\\\$\" \"d:\\\\RAFLY\\\\TPS\\\\dashboard-alat\\\\lib\\\\rtg.ts\")",
+      "Bash(npm install:*)",
+      "Bash(node scripts/read-excel.js)",
+      "Bash(npm list:*)",
+      "Bash(timeout 10 npm run dev)",
+      "Bash(npm run:*)",
+      "Bash(psql postgresql://postgres:123111@localhost:5432/dashboard_alat -c \"SELECT kode_rtg, nama_rtg FROM rtg_units ORDER BY kode_rtg LIMIT 10;\")",
+      "Bash(taskkill /F /PID 6868)",
+      "Bash(taskkill //F //PID 6868)",
+      "Bash(npx shadcn@latest add drawer)"
+    ]
+  }
+}

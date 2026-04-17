@@ -19,7 +19,8 @@ import {
   WrenchIcon,
   Settings2Icon,
   AlertTriangleIcon,
-  ClipboardCheckIcon
+  ClipboardCheckIcon,
+  History
 } from "lucide-react"
 
 // Crane icon custom
@@ -53,28 +54,22 @@ export function AppSidebar({ user }: { user?: { nama: string; email: string; rol
     },
     ...(user?.role === 'operasional' ? [
       {
-        title: "Master Data",
-        url: "/operasional",
-        icon: <Settings2Icon className="h-4 w-4" />,
-        isActive: pathname?.startsWith("/operasional/rtg-"),
-        items: [
-          {
-            title: "RTG Groups",
-            url: "/operasional/rtg-groups",
-            isActive: pathname === "/operasional/rtg-groups",
-          },
-          {
-            title: "RTG Units",
-            url: "/operasional/rtg-units",
-            isActive: pathname === "/operasional/rtg-units",
-          },
-        ],
+        title: "RTG Units",
+        url: "/operasional/rtg-units",
+        icon: <WrenchIcon className="h-4 w-4" />,
+        isActive: pathname === "/operasional/rtg-units",
+      },
+      {
+        title: "History",
+        url: "/operasional/history",
+        icon: <History className="h-4 w-4" />,
+        isActive: pathname === "/operasional/history",
       },
       {
         title: "Laporan Kerusakan",
         url: "/operasional/buat-laporan",
         icon: <AlertTriangleIcon className="h-4 w-4" />,
-        isActive: pathname?.startsWith("/operasional/") && !pathname?.includes("/rtg-"),
+        isActive: pathname?.startsWith("/operasional/buat-laporan") || pathname?.startsWith("/operasional/daftar-laporan"),
         items: [
           {
             title: "Buat Laporan",
@@ -91,10 +86,10 @@ export function AppSidebar({ user }: { user?: { nama: string; email: string; rol
     ] : []),
     ...(user?.role === 'peralatan_terminal' || user?.role === 'perencanaan_persediaan' || user?.role === 'fasilitas' ? [
       {
-        title: "Laporan Saya",
-        url: `/${user.role}/laporan`,
+        title: "Penindak Lanjut",
+        url: `/${user.role}/penindak-lanjut`,
         icon: <ClipboardCheckIcon className="h-4 w-4" />,
-        isActive: pathname?.startsWith(`/${user.role}/laporan`),
+        isActive: pathname === `/${user.role}/penindak-lanjut`,
       },
     ] : []),
   ]

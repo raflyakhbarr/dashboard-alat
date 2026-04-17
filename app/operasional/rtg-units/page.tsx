@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth';
 import {
   getAllRTGUnits,
-  getAllRTGGroups,
   createRTGUnit,
   deleteRTGUnit,
 } from '@/lib/rtg';
@@ -25,8 +24,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Trash2 } from 'lucide-react';
+import { Trash2, Wrench } from 'lucide-react';
 import { StatusKondisiLabels, type StatusKondisiRTG } from '@/types/rtg';
+import { AppSidebar } from "@/components/app-sidebar"
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
+import { Separator } from "@/components/ui/separator"
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar"
 
 async function createUnit(formData: FormData) {
   'use server';
@@ -37,24 +51,13 @@ async function createUnit(formData: FormData) {
 
   const kode_rtg = formData.get('kode_rtg') as string;
   const nama_rtg = formData.get('nama_rtg') as string;
-  const group_rtg_id = formData.get('group_rtg_id') as string;
-  const kapasitas = formData.get('kapasitas') as string;
-  const tahun_pembuatan = formData.get('tahun_pembuatan') as string;
-  const manufacturer = formData.get('manufacturer') as string;
-  const spesifikasi = formData.get('spesifikasi') as string;
   const status_kondisi = formData.get('status_kondisi') as StatusKondisiRTG;
 
   await createRTGUnit({
     kode_rtg,
     nama_rtg,
-    group_rtg_id: group_rtg_id || undefined,
-    kapasitas: kapasitas ? parseInt(kapasitas) : undefined,
-    tahun_pembuatan: tahun_pembuatan ? parseInt(tahun_pembuatan) : undefined,
-    manufacturer,
-    spesifikasi,
     status_kondisi,
   });
-  // revalidatePath not available in Next.js 16
   redirect('/operasional/rtg-units');
 }
 
@@ -76,71 +79,66 @@ export default async function RTGUnitsPage() {
     redirect('/login');
   }
 
-  const [units, groups] = await Promise.all([getAllRTGUnits(), getAllRTGGroups()]);
+  const units = await getAllRTGUnits();
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 pt-6">
-      <h1 className="text-2xl font-bold">Master RTG Units</h1>
+    <SidebarProvider>
+      <AppSidebar user={{ nama: session.nama, email: session.email, role: session.role }} />
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2">
+          <div className="flex items-center gap-2 px-4 w-full">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="mr-2 h-4" />
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem>
+                  <BreadcrumbLink href="/dashboard">Dashboard</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>RTG Units</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+          </div>
+        </header>
 
-      <Card className="max-w-3xl">
+        <div className="flex flex-1 flex-col gap-4 p-4 pt-6">
+          <div className="flex items-center gap-2">
+            <Wrench className="h-6 w-6" />
+            <h1 className="text-2xl font-bold">Master RTG Units</h1>
+          </div>
+
+          <Card className="max-w-3xl">
         <CardHeader>
           <CardTitle>Tambah RTG Unit</CardTitle>
           <CardDescription>Buat unit RTG baru</CardDescription>
         </CardHeader>
         <CardContent>
           <form action={createUnit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="kode_rtg">Kode RTG *</Label>
-              <Input type="text" id="kode_rtg" name="kode_rtg" placeholder="RTG-001" required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="nama_rtg">Nama RTG *</Label>
-              <Input type="text" id="nama_rtg" name="nama_rtg" placeholder="RTG A1" required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="group_rtg_id">Group RTG</Label>
-              <Select name="group_rtg_id">
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih Group" />
-                </SelectTrigger>
-                <SelectContent>
-                  {groups.map((group) => (
-                    <SelectItem key={group.id} value={group.id}>
-                      {group.nama_group}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="kapasitas">Kapasitas (Ton)</Label>
-              <Input type="number" id="kapasitas" name="kapasitas" placeholder="50" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="tahun_pembuatan">Tahun Pembuatan</Label>
-              <Input type="number" id="tahun_pembuatan" name="tahun_pembuatan" placeholder="2020" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="manufacturer">Manufacturer</Label>
-              <Input type="text" id="manufacturer" name="manufacturer" placeholder="Konecranes" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="spesifikasi">Spesifikasi</Label>
-              <Input type="text" id="spesifikasi" name="spesifikasi" placeholder="Spesifikasi teknis" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="status_kondisi">Status Kondisi *</Label>
-              <Select name="status_kondisi" required>
-                <SelectTrigger>
-                  <SelectValue placeholder="Pilih Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="READY">Ready</SelectItem>
-                  <SelectItem value="READY_CATATAN_RINGAN">Ready Catatan Ringan</SelectItem>
-                  <SelectItem value="READY_CATATAN_BERAT">Ready Catatan Berat</SelectItem>
-                  <SelectItem value="TIDAK_READY">Tidak Ready</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="kode_rtg">Kode RTG *</Label>
+                <Input type="text" id="kode_rtg" name="kode_rtg" placeholder="RTG-001" required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="nama_rtg">Nama RTG *</Label>
+                <Input type="text" id="nama_rtg" name="nama_rtg" placeholder="RTG A1" required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="status_kondisi">Status Kondisi *</Label>
+                <Select name="status_kondisi" required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="READY">Ready</SelectItem>
+                    <SelectItem value="READY_CATATAN_RINGAN">Ready Catatan Ringan</SelectItem>
+                    <SelectItem value="READY_CATATAN_BERAT">Ready Catatan Berat</SelectItem>
+                    <SelectItem value="TIDAK_READY">Tidak Ready</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <Button type="submit">Simpan</Button>
           </form>
@@ -159,8 +157,6 @@ export default async function RTGUnitsPage() {
                 <TableRow>
                   <TableHead>Kode</TableHead>
                   <TableHead>Nama</TableHead>
-                  <TableHead>Group</TableHead>
-                  <TableHead>Kapasitas</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Aksi</TableHead>
                 </TableRow>
@@ -170,8 +166,6 @@ export default async function RTGUnitsPage() {
                   <TableRow key={unit.id}>
                     <TableCell className="font-medium">{unit.kode_rtg}</TableCell>
                     <TableCell>{unit.nama_rtg}</TableCell>
-                    <TableCell>{unit.group_rtg?.nama_group || '-'}</TableCell>
-                    <TableCell>{unit.kapasitas ? `${unit.kapasitas} Ton` : '-'}</TableCell>
                     <TableCell>{StatusKondisiLabels[unit.status_kondisi]}</TableCell>
                     <TableCell className="text-right">
                       <form action={deleteUnit}>
@@ -193,5 +187,7 @@ export default async function RTGUnitsPage() {
         </CardContent>
       </Card>
     </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
