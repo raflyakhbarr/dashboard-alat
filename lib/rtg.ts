@@ -753,7 +753,8 @@ export async function getRTGUnitHistory(
       l.jenis_kerusakan,
       pk.foto_bukti as penindaklanjut_foto_bukti,
       pk.deskripsi_tindakan,
-      pk.tanggal_selesai
+      pk.tanggal_selesai,
+      pk.created_at as penindaklanjut_created_at
     FROM rtg_status_history h
     INNER JOIN rtg_units u ON h.rtg_unit_id = u.id
     LEFT JOIN users usr ON h.diubah_oleh::uuid = usr.id
@@ -764,28 +765,44 @@ export async function getRTGUnitHistory(
     LIMIT $2
   `, [rtgUnitId, limit]);
 
-  return result.rows.map((row: any) => ({
-    id: row.id,
-    rtg_unit_id: row.rtg_unit_id,
-    status_kondisi_sebelumnya: row.status_kondisi_sebelumnya,
-    status_kondisi_baru: row.status_kondisi_baru,
-    alasan_perubahan: row.alasan_perubahan,
-    laporan_kerusakan_id: row.laporan_kerusakan_id,
-    diubah_oleh: row.diubah_oleh,
-    created_at: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at,
-    rtg_unit: {
-      kode_rtg: row.kode_rtg,
-      nama_rtg: row.nama_rtg,
-    },
-    diubah_oleh_details: row.diubah_oleh_nama ? {
-      nama: row.diubah_oleh_nama,
-      email: row.diubah_oleh_email,
-      role: row.diubah_oleh_role,
-    } : null,
-    foto_laporan: row.foto_laporan || [],
-    penindaklanjut_foto_bukti: row.penindaklanjut_foto_bukti || [],
-    jenis_kerusakan: row.jenis_kerusakan,
-  }));
+  return result.rows.map((row: any) => {
+    // Hanya tampilkan foto bukti penindaklanjut jika history record dibuat
+    // pada saat penindaklanjutan dilakukan (within 1 minute tolerance)
+    const historyTimestamp = new Date(row.created_at).getTime();
+    const penindaklanjutTimestamp = row.penindaklanjut_created_at
+      ? new Date(row.penindaklanjut_created_at).getTime()
+      : null;
+
+    // Tolerance 1 menit (60000 ms) untuk memastikan timing yang tepat
+    const isSameTime = penindaklanjutTimestamp &&
+      Math.abs(historyTimestamp - penindaklanjutTimestamp) < 60000;
+
+    return {
+      id: row.id,
+      rtg_unit_id: row.rtg_unit_id,
+      status_kondisi_sebelumnya: row.status_kondisi_sebelumnya,
+      status_kondisi_baru: row.status_kondisi_baru,
+      alasan_perubahan: row.alasan_perubahan,
+      laporan_kerusakan_id: row.laporan_kerusakan_id,
+      diubah_oleh: row.diubah_oleh,
+      created_at: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at,
+      rtg_unit: {
+        kode_rtg: row.kode_rtg,
+        nama_rtg: row.nama_rtg,
+      },
+      diubah_oleh_details: row.diubah_oleh_nama ? {
+        nama: row.diubah_oleh_nama,
+        email: row.diubah_oleh_email,
+        role: row.diubah_oleh_role,
+      } : null,
+      foto_laporan: row.foto_laporan || [],
+      // Hanya tampilkan foto bukti jika history record dibuat pada saat penindaklanjutan
+      penindaklanjut_foto_bukti: isSameTime
+        ? (row.penindaklanjut_foto_bukti || [])
+        : [],
+      jenis_kerusakan: row.jenis_kerusakan,
+    };
+  });
 }
 
 export async function getRTGStatusHistoryByUnit(

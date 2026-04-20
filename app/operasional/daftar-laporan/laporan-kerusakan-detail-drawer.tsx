@@ -49,7 +49,17 @@ export function LaporanKerusakanDetailDrawer({
   useEffect(() => {
     if (selectedImage) {
       // Disable scroll on body
+      const originalOverflow = document.body.style.overflow;
+      const originalPointerEvents = document.body.style.pointerEvents;
       document.body.style.overflow = 'hidden';
+      document.body.style.pointerEvents = 'none'; // Mencegah klik ke drawer overlay
+
+      // Force disable drawer overlay interaction
+      const drawerOverlays = document.querySelectorAll('[data-slot="drawer-overlay"]');
+      drawerOverlays.forEach(overlay => {
+        (overlay as HTMLElement).style.pointerEvents = 'none';
+      });
+
       // Add event listener untuk mencegah ESC key menutup drawer
       const handleEsc = (e: KeyboardEvent) => {
         if (e.key === 'Escape') {
@@ -59,8 +69,13 @@ export function LaporanKerusakanDetailDrawer({
         }
       };
       document.addEventListener('keydown', handleEsc, true); // Use capture phase
+
       return () => {
-        document.body.style.overflow = '';
+        document.body.style.overflow = originalOverflow;
+        document.body.style.pointerEvents = originalPointerEvents;
+        drawerOverlays.forEach(overlay => {
+          (overlay as HTMLElement).style.pointerEvents = '';
+        });
         document.removeEventListener('keydown', handleEsc, true);
       };
     }
@@ -330,42 +345,48 @@ export function LaporanKerusakanDetailDrawer({
       {/* Image Preview Modal */}
       {mounted && selectedImage && createPortal(
         <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-4"
-          onPointerDown={(e) => {
-            // Hanya tutup jika klik di background, bukan di image container
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80"
+          style={{ pointerEvents: 'auto' }}
+          onClick={(e) => {
+            // Hanya tutup jika klik background langsung
             if (e.target === e.currentTarget) {
               e.preventDefault();
               e.stopPropagation();
+              e.stopImmediatePropagation();
               setSelectedImage(null);
             }
           }}
         >
           <div
-            className="relative max-w-4xl max-h-[90vh] w-full bg-transparent"
-            onPointerDown={(e) => {
+            className="relative max-w-4xl max-h-[90vh] w-full bg-transparent pointer-events-auto"
+            onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
+              e.stopImmediatePropagation();
             }}
           >
-            <Image
-              src={selectedImage}
-              alt="Preview"
-              width={800}
-              height={600}
-              className="w-full h-auto object-contain rounded-lg"
-            />
-            <Button
-              variant="secondary"
-              size="sm"
-              className="absolute top-2 right-2"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setSelectedImage(null);
-              }}
-            >
-              Tutup
-            </Button>
+            <div className="relative bg-transparent">
+              <Image
+                src={selectedImage}
+                alt="Preview"
+                width={800}
+                height={600}
+                className="w-full h-auto object-contain rounded-lg"
+              />
+              <Button
+                variant="secondary"
+                size="sm"
+                className="absolute top-2 right-2"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  e.stopImmediatePropagation();
+                  setSelectedImage(null);
+                }}
+              >
+                Tutup
+              </Button>
+            </div>
           </div>
         </div>,
         document.body
