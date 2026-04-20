@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Drawer,
   DrawerClose,
@@ -38,6 +39,32 @@ export function LaporanKerusakanDetailDrawer({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Mencegah drawer menutup ketika modal aktif
+  useEffect(() => {
+    if (selectedImage) {
+      // Disable scroll on body
+      document.body.style.overflow = 'hidden';
+      // Add event listener untuk mencegah ESC key menutup drawer
+      const handleEsc = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          e.stopPropagation();
+          setSelectedImage(null);
+        }
+      };
+      document.addEventListener('keydown', handleEsc, true); // Use capture phase
+      return () => {
+        document.body.style.overflow = '';
+        document.removeEventListener('keydown', handleEsc, true);
+      };
+    }
+  }, [selectedImage]);
 
   useEffect(() => {
     if (open && laporan) {
@@ -301,12 +328,25 @@ export function LaporanKerusakanDetailDrawer({
       </Drawer>
 
       {/* Image Preview Modal */}
-      {selectedImage && (
+      {mounted && selectedImage && createPortal(
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
-          onClick={() => setSelectedImage(null)}
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-4"
+          onPointerDown={(e) => {
+            // Hanya tutup jika klik di background, bukan di image container
+            if (e.target === e.currentTarget) {
+              e.preventDefault();
+              e.stopPropagation();
+              setSelectedImage(null);
+            }
+          }}
         >
-          <div className="relative max-w-4xl max-h-[90vh] w-full">
+          <div
+            className="relative max-w-4xl max-h-[90vh] w-full bg-transparent"
+            onPointerDown={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+          >
             <Image
               src={selectedImage}
               alt="Preview"
@@ -318,12 +358,17 @@ export function LaporanKerusakanDetailDrawer({
               variant="secondary"
               size="sm"
               className="absolute top-2 right-2"
-              onClick={() => setSelectedImage(null)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setSelectedImage(null);
+              }}
             >
               Tutup
             </Button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

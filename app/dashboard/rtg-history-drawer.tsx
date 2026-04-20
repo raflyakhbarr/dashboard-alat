@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Drawer,
   DrawerClose,
@@ -27,6 +28,32 @@ export function RTGHistoryDrawer({ rtgUnit, open, onOpenChange }: RTGHistoryDraw
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Mencegah drawer menutup ketika modal aktif
+  useEffect(() => {
+    if (selectedImage) {
+      // Disable scroll on body
+      document.body.style.overflow = 'hidden';
+      // Add event listener untuk mencegah ESC key menutup drawer
+      const handleEsc = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          e.stopPropagation();
+          setSelectedImage(null);
+        }
+      };
+      document.addEventListener('keydown', handleEsc, true); // Use capture phase
+      return () => {
+        document.body.style.overflow = '';
+        document.removeEventListener('keydown', handleEsc, true);
+      };
+    }
+  }, [selectedImage]);
 
   useEffect(() => {
     if (open && rtgUnit) {
@@ -217,7 +244,7 @@ export function RTGHistoryDrawer({ rtgUnit, open, onOpenChange }: RTGHistoryDraw
                                   Foto Bukti Penindaklanjut ({item.penindaklanjut_foto_bukti.length})
                                 </p>
                               </div>
-                              <div className="grid grid-cols-3 gap-2">
+                              <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
                                 {item.penindaklanjut_foto_bukti.map((foto, idx) => (
                                   <div
                                     key={idx}
@@ -229,7 +256,7 @@ export function RTGHistoryDrawer({ rtgUnit, open, onOpenChange }: RTGHistoryDraw
                                       alt={`Foto bukti ${idx + 1}`}
                                       fill
                                       className="object-cover"
-                                      sizes="(max-width: 768px) 33vw, 100px"
+                                      sizes="(max-width: 768px) 20vw, 80px"
                                     />
                                   </div>
                                 ))}
@@ -257,12 +284,25 @@ export function RTGHistoryDrawer({ rtgUnit, open, onOpenChange }: RTGHistoryDraw
     </Drawer>
 
     {/* Image Preview Modal */}
-    {selectedImage && (
+    {mounted && selectedImage && createPortal(
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
-        onClick={() => setSelectedImage(null)}
+        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 p-4"
+        onPointerDown={(e) => {
+          // Hanya tutup jika klik di background, bukan di image container
+          if (e.target === e.currentTarget) {
+            e.preventDefault();
+            e.stopPropagation();
+            setSelectedImage(null);
+          }
+        }}
       >
-        <div className="relative max-w-4xl max-h-[90vh] w-full">
+        <div
+          className="relative max-w-4xl max-h-[90vh] w-full bg-transparent"
+          onPointerDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+        >
           <Image
             src={selectedImage}
             alt="Preview"
@@ -274,12 +314,17 @@ export function RTGHistoryDrawer({ rtgUnit, open, onOpenChange }: RTGHistoryDraw
             variant="secondary"
             size="sm"
             className="absolute top-2 right-2"
-            onClick={() => setSelectedImage(null)}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setSelectedImage(null);
+            }}
           >
             Tutup
           </Button>
         </div>
-      </div>
+      </div>,
+      document.body
     )}
   </>
   );

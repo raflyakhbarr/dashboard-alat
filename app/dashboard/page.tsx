@@ -18,8 +18,10 @@ import { logout } from '@/app/dashboard/actions';
 import { Button } from '@/components/ui/button';
 import { getDashboardStats, getAllRTGUnits } from '@/lib/rtg';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
 import { CheckCircle2, AlertCircle, AlertTriangle, XCircle, Wrench } from 'lucide-react';
 import { RTGUnitsTable } from './rtg-units-table';
+import { StatusPieChart } from './status-pie-chart';
 
 export default async function DashboardPage() {
   const session = await getSession();
@@ -47,6 +49,13 @@ export default async function DashboardPage() {
   // Get RTG statistics
   const stats = await getDashboardStats();
   const rtgUnits = await getAllRTGUnits();
+
+  // Calculate percentages for progress bars
+  const totalUnits = stats.total_rtg || 1; // Avoid division by zero
+  const readyPercent = Math.round((stats.ready / totalUnits) * 100);
+  const catatanRinganPercent = Math.round((stats.ready_catatan_ringan / totalUnits) * 100);
+  const catatanBeratPercent = Math.round((stats.ready_catatan_berat / totalUnits) * 100);
+  const tidakReadyPercent = Math.round((stats.tidak_ready / totalUnits) * 100);
 
   return (
     <SidebarProvider>
@@ -156,6 +165,94 @@ export default async function DashboardPage() {
                 <p className="text-xs text-muted-foreground">Total unit</p>
               </CardContent>
             </Card>
+          </div>
+
+          {/* Charts and Progress Section */}
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* Progress Bars */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Distribusi Status RTG</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Ready */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-green-600" />
+                      <span className="font-medium">Ready</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">{stats.ready} unit</span>
+                      <span className="font-bold text-green-600">{readyPercent}%</span>
+                    </div>
+                  </div>
+                  <Progress value={readyPercent} className="h-2" />
+                </div>
+
+                {/* Catatan Ringan */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4 text-yellow-600" />
+                      <span className="font-medium">Catatan Ringan</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">{stats.ready_catatan_ringan} unit</span>
+                      <span className="font-bold text-yellow-600">{catatanRinganPercent}%</span>
+                    </div>
+                  </div>
+                  <Progress value={catatanRinganPercent} className="h-2 [&>div]:bg-yellow-500" />
+                </div>
+
+                {/* Catatan Berat */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4 text-orange-600" />
+                      <span className="font-medium">Catatan Berat</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">{stats.ready_catatan_berat} unit</span>
+                      <span className="font-bold text-orange-600">{catatanBeratPercent}%</span>
+                    </div>
+                  </div>
+                  <Progress value={catatanBeratPercent} className="h-2 [&>div]:bg-orange-500" />
+                </div>
+
+                {/* Tidak Ready */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <XCircle className="h-4 w-4 text-red-600" />
+                      <span className="font-medium">Tidak Ready</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">{stats.tidak_ready} unit</span>
+                      <span className="font-bold text-red-600">{tidakReadyPercent}%</span>
+                    </div>
+                  </div>
+                  <Progress value={tidakReadyPercent} className="h-2 [&>div]:bg-red-500" />
+                </div>
+
+                {/* Total Summary */}
+                <div className="pt-2 border-t">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium">Total Unit</span>
+                    <span className="text-lg font-bold">{stats.total_rtg}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Pie Chart */}
+            <StatusPieChart
+              ready={stats.ready}
+              ready_catatan_ringan={stats.ready_catatan_ringan}
+              ready_catatan_berat={stats.ready_catatan_berat}
+              tidak_ready={stats.tidak_ready}
+              total_rtg={stats.total_rtg}
+            />
           </div>
 
           {/* RTG Units Table */}
