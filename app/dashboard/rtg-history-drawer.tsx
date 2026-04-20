@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import {
   Drawer,
@@ -13,8 +13,15 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { StatusKondisiLabels, StatusKondisiColors, type RTGStatusHistoryWithDetails, type RTGUnitWithGroup } from '@/types/rtg';
-import { Loader2, Clock, User, FileText, ImageIcon, CheckCircle2 } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { StatusKondisiLabels, StatusKondisiColors, type RTGStatusHistoryWithDetails, type RTGUnitWithGroup, StatusKondisiRTG } from '@/types/rtg';
+import { Loader2, Clock, User, FileText, ImageIcon, CheckCircle2, Filter, Calendar, TrendingUp, AlertCircle } from 'lucide-react';
 import Image from 'next/image';
 
 interface RTGHistoryDrawerProps {
@@ -23,12 +30,19 @@ interface RTGHistoryDrawerProps {
   onOpenChange: (open: boolean) => void;
 }
 
+type FilterPeriod = 'all' | 'week' | 'month' | '3months' | '6months' | 'year';
+
 export function RTGHistoryDrawer({ rtgUnit, open, onOpenChange }: RTGHistoryDrawerProps) {
   const [history, setHistory] = useState<RTGStatusHistoryWithDetails[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+
+  // Filter states
+  const [filterPeriod, setFilterPeriod] = useState<FilterPeriod>('all');
+  const [filterStatus, setFilterStatus] = useState<StatusKondisiRTG | 'all'>('all');
+  const [filterUser, setFilterUser] = useState<string>('all');
 
   useEffect(() => {
     setMounted(true);
@@ -120,27 +134,297 @@ export function RTGHistoryDrawer({ rtgUnit, open, onOpenChange }: RTGHistoryDraw
     });
   };
 
+  // Filter history data based on selected filters
+  const filteredHistory = useMemo(() => {
+    let filtered = [...history];
+
+    // Filter by period
+    if (filterPeriod !== 'all') {
+      const now = new Date();
+      const cutoffDate = new Date();
+
+      switch (filterPeriod) {
+        case 'week':
+          cutoffDate.setDate(now.getDate() - 7);
+          break;
+        case 'month':
+          cutoffDate.setMonth(now.getMonth() - 1);
+          break;
+        case '3months':
+          cutoffDate.setMonth(now.getMonth() - 3);
+          break;
+        case '6months':
+          cutoffDate.setMonth(now.getMonth() - 6);
+          break;
+        case 'year':
+          cutoffDate.setFullYear(now.getFullYear() - 1);
+          break;
+      }
+
+      filtered = filtered.filter(item => {
+        const itemDate = new Date(item.created_at);
+        return itemDate >= cutoffDate;
+      });
+    }
+
+    // Filter by status
+    if (filterStatus !== 'all') {
+      filtered = filtered.filter(item => item.status_kondisi_baru === filterStatus);
+    }
+
+    // Filter by user
+    if (filterUser !== 'all') {
+      filtered = filtered.filter(item =>
+        item.diubah_oleh === filterUser ||
+        item.diubah_oleh_details?.nama === filterUser
+      );
+    }
+
+    return filtered;
+  }, [history, filterPeriod, filterStatus, filterUser]);
+
+  // Calculate statistics
+  const stats = useMemo(() => {
+    const total = filteredHistory.length;
+
+    // Count by status
+    const statusCounts: Record<StatusKondisiRTG, number> = {
+      READY: 0,
+      READY_CATATAN_RINGAN: 0,
+      READY_CATATAN_BERAT: 0,
+      TIDAK_READY: 0,
+    };
+
+    // Count issues (non-ready statuses)
+    let issueCount = 0;
+
+    filteredHistory.forEach(item => {
+      statusCounts[item.status_kondisi_baru]++;
+
+      if (item.status_kondisi_baru !== 'READY') {
+        issueCount++;
+      }
+    });
+
+    // Get unique users who made changes
+    const uniqueUsers = new Set(
+      filteredHistory
+        .filter(item => item.diubah_oleh_details?.nama)
+        .map(item => item.diubah_oleh_details?.nama)
+    );
+
+    // Count reports with evidence
+    const reportsWithEvidence = filteredHistory.filter(
+      item => item.penindaklanjut_foto_bukti && item.penindaklanjut_foto_bukti.length > 0
+    ).length;
+
+    return {
+      total,
+      statusCounts,
+      issueCount,
+      uniqueUsersCount: uniqueUsers.size,
+      reportsWithEvidence,
+    };
+  }, [filteredHistory]);
+
+  // Get unique users for filter dropdown
+  const uniqueUsers = useMemo(() => {
+    const users = new Set(
+      history
+        .filter(item => item.diubah_oleh_details?.nama)
+        .map(item => item.diubah_oleh_details?.nama)
+    );
+    return Array.from(users).sort();
+  }, [history]);
+
+  // Reset filters when drawer closes
+  useEffect(() => {
+    if (!open) {
+      setFilterPeriod('all');
+      setFilterStatus('all');
+      setFilterUser('all');
+    }
+  }, [open]);
+
   return (
     <>
     <Drawer open={open} onOpenChange={handleDrawerOpenChange}>
-      <DrawerContent>
-        <DrawerHeader className="border-b pb-4">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <DrawerTitle className="text-2xl">
-                {rtgUnit?.kode_rtg} - {rtgUnit?.nama_rtg}
-              </DrawerTitle>
-              <DrawerDescription className="mt-2">
-                Riwayat perubahan status kondisi RTG
-              </DrawerDescription>
+      <DrawerContent
+        className="!mt-24 !max-h-[100dvh] rounded-none data-[vaul-drawer-direction=bottom]:!mt-0 data-[vaul-drawer-direction=bottom]:!max-h-[100dvh] data-[vaul-drawer-direction=bottom]:!rounded-none"
+        style={{ height: '100dvh', maxHeight: '100dvh' }}
+      >
+        <div className="flex flex-col h-full [&>div:first-child]:hidden">
+          <DrawerHeader className="border-b pb-4 shrink-0 px-6">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <DrawerTitle className="text-2xl">
+                  {rtgUnit?.kode_rtg} - {rtgUnit?.nama_rtg}
+                </DrawerTitle>
+                <DrawerDescription className="mt-2">
+                  Riwayat perubahan status kondisi RTG
+                </DrawerDescription>
+              </div>
+              <Badge className={StatusKondisiColors[rtgUnit?.status_kondisi || 'READY']}>
+                {StatusKondisiLabels[rtgUnit?.status_kondisi || 'READY']}
+              </Badge>
             </div>
-            <Badge className={StatusKondisiColors[rtgUnit?.status_kondisi || 'READY']}>
-              {StatusKondisiLabels[rtgUnit?.status_kondisi || 'READY']}
-            </Badge>
-          </div>
-        </DrawerHeader>
+          </DrawerHeader>
 
-        <div className="p-6">
+          <div className="flex flex-col flex-1 min-h-0 px-6 py-4 overflow-hidden">
+          {/* Filter Section */}
+          {!loading && !error && history.length > 0 && (
+            <div className="mb-3 space-y-2 shrink-0 overflow-y-auto max-h-[30vh] pr-2">
+              <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                <Filter className="h-3 w-3" />
+                <span>Filter Riwayat</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {/* Period Filter */}
+                <div className="space-y-1">
+                  <label className="text-[10px] font-medium text-muted-foreground">Periode</label>
+                  <Select value={filterPeriod} onValueChange={(value) => setFilterPeriod(value as FilterPeriod)}>
+                    <SelectTrigger className="w-full h-8 text-xs">
+                      <SelectValue placeholder="Pilih periode" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Semua Waktu</SelectItem>
+                      <SelectItem value="week">7 Hari Terakhir</SelectItem>
+                      <SelectItem value="month">30 Hari Terakhir</SelectItem>
+                      <SelectItem value="3months">3 Bulan Terakhir</SelectItem>
+                      <SelectItem value="6months">6 Bulan Terakhir</SelectItem>
+                      <SelectItem value="year">1 Tahun Terakhir</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Status Filter */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Status</label>
+                  <Select value={filterStatus} onValueChange={(value) => setFilterStatus(value as StatusKondisiRTG | 'all')}>
+                    <SelectTrigger className="w-full h-8 text-xs">
+                      <SelectValue placeholder="Filter status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Semua Status</SelectItem>
+                      <SelectItem value="READY">Ready</SelectItem>
+                      <SelectItem value="READY_CATATAN_RINGAN">Ready Catatan Ringan</SelectItem>
+                      <SelectItem value="READY_CATATAN_BERAT">Ready Catatan Berat</SelectItem>
+                      <SelectItem value="TIDAK_READY">Tidak Ready</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* User Filter */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-muted-foreground">Diubah Oleh</label>
+                  <Select value={filterUser} onValueChange={setFilterUser}>
+                    <SelectTrigger className="w-full h-8 text-xs">
+                      <SelectValue placeholder="Filter user" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Semua User</SelectItem>
+                      {uniqueUsers.map((user) => (
+                        <SelectItem key={user} value={user}>{user}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Statistics Cards */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                <div className="bg-muted/50 rounded-lg p-2">
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground mb-0.5">
+                    <Calendar className="h-2.5 w-2.5" />
+                    <span className="text-[10px]">Total</span>
+                  </div>
+                  <p className="text-xl font-bold">{stats.total}</p>
+                </div>
+
+                <div className="bg-muted/50 rounded-lg p-2">
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground mb-0.5">
+                    <AlertCircle className="h-2.5 w-2.5" />
+                    <span className="text-[10px]">Issue</span>
+                  </div>
+                  <p className="text-xl font-bold text-orange-600">{stats.issueCount}</p>
+                </div>
+
+                <div className="bg-muted/50 rounded-lg p-2">
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground mb-0.5">
+                    <User className="h-2.5 w-2.5" />
+                    <span className="text-[10px]">User</span>
+                  </div>
+                  <p className="text-xl font-bold">{stats.uniqueUsersCount}</p>
+                </div>
+
+                <div className="bg-muted/50 rounded-lg p-2">
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground mb-0.5">
+                    <CheckCircle2 className="h-2.5 w-2.5" />
+                    <span className="text-[10px]">Bukti</span>
+                  </div>
+                  <p className="text-xl font-bold text-green-600">{stats.reportsWithEvidence}</p>
+                </div>
+              </div>
+
+              {/* Status Breakdown */}
+              <div className="bg-muted/30 rounded-lg p-2">
+                <div className="flex items-center gap-1 text-xs font-medium text-muted-foreground mb-1.5">
+                  <TrendingUp className="h-2.5 w-2.5" />
+                  <span className="text-[10px]">Breakdown Status</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                  {Object.entries(stats.statusCounts).map(([status, count]) => (
+                    <div key={status} className="flex items-center justify-between">
+                      <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${StatusKondisiColors[status as StatusKondisiRTG]}`}>
+                        {StatusKondisiLabels[status as StatusKondisiRTG]}
+                      </Badge>
+                      <span className="text-xs font-medium ml-1">{count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Active Filters Display */}
+              {(filterPeriod !== 'all' || filterStatus !== 'all' || filterUser !== 'all') && (
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[10px] text-muted-foreground">Filter aktif:</span>
+                  {filterPeriod !== 'all' && (
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                      {filterPeriod === 'week' ? '7 hari' :
+                       filterPeriod === 'month' ? '30 hari' :
+                       filterPeriod === '3months' ? '3 bulan' :
+                       filterPeriod === '6months' ? '6 bulan' :
+                       filterPeriod === 'year' ? '1 tahun' : filterPeriod}
+                    </Badge>
+                  )}
+                  {filterStatus !== 'all' && (
+                    <Badge variant="secondary" className={`text-[10px] px-1.5 py-0 ${StatusKondisiColors[filterStatus]}`}>
+                      {StatusKondisiLabels[filterStatus]}
+                    </Badge>
+                  )}
+                  {filterUser !== 'all' && (
+                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                      {filterUser}
+                    </Badge>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-5 px-1.5 text-[10px]"
+                    onClick={() => {
+                      setFilterPeriod('all');
+                      setFilterStatus('all');
+                      setFilterUser('all');
+                    }}
+                  >
+                    Reset
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
           {loading && (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -160,10 +444,17 @@ export function RTGHistoryDrawer({ rtgUnit, open, onOpenChange }: RTGHistoryDraw
             </div>
           )}
 
-          {!loading && !error && history.length > 0 && (
-            <ScrollArea className="h-[400px]">
+          {!loading && !error && filteredHistory.length === 0 && history.length > 0 && (
+            <div className="text-center py-8 text-muted-foreground">
+              <Filter className="h-12 w-12 mx-auto mb-4 opacity-50" />
+              <p>Tidak ada riwayat yang sesuai dengan filter</p>
+            </div>
+          )}
+
+          {!loading && !error && filteredHistory.length > 0 && (
+            <ScrollArea className="flex-1 min-h-0">
               <div className="space-y-4 pr-4">
-                {history.map((item, index) => (
+                {filteredHistory.map((item, index) => (
                   <div
                     key={item.id}
                     className="relative pl-6 pb-6 border-l-2 border-muted last:pb-0"
@@ -297,7 +588,7 @@ export function RTGHistoryDrawer({ rtgUnit, open, onOpenChange }: RTGHistoryDraw
           )}
         </div>
 
-        <div className="border-t p-4">
+        <div className="border-t p-4 shrink-0">
           <DrawerClose asChild>
             <Button
               variant="outline"
@@ -312,6 +603,7 @@ export function RTGHistoryDrawer({ rtgUnit, open, onOpenChange }: RTGHistoryDraw
               Tutup
             </Button>
           </DrawerClose>
+        </div>
         </div>
       </DrawerContent>
     </Drawer>
