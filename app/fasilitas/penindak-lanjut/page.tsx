@@ -65,7 +65,7 @@ async function submitPenindaklanjut(formData: FormData) {
         rtg_unit_id,
         status_kondisi_sebelumnya: currentRTG?.status_kondisi || null,
         status_kondisi_baru: status_rtg,
-        alasan_perubahan: `Penindak lanjut laporan ${laporan_kerusakan_id}: ${deskripsi_tindakan}`,
+        alasan_perubahan: `Penindaklanjut: ${deskripsi_tindakan}`,
         laporan_kerusakan_id: laporan_kerusakan_id,
         diubah_oleh: session.id,
       });

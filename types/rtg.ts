@@ -237,6 +237,9 @@ export interface RTGStatusHistoryWithDetails extends RTGStatusHistory {
     email: string;
     role: string;
   } | null;
+  foto_laporan?: string[];
+  penindaklanjut_foto_bukti?: string[];
+  jenis_kerusakan?: string;
 }
 
 // RTG Monthly Statistics

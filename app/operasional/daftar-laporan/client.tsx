@@ -15,6 +15,8 @@ import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/s
 import { ImportExcelButton } from '@/components/import-excel-button';
 import { ImportExcelForm } from '@/components/import-excel-form';
 import { updateStatus as updateStatusAction } from './update-status';
+import { LaporanKerusakanDetailDrawer } from './laporan-kerusakan-detail-drawer';
+import { FileText } from 'lucide-react';
 
 const statusColors: Record<StatusKerusakan, string> = {
   DIPERIKSA: 'bg-yellow-100 text-yellow-800 border-yellow-200',
@@ -33,6 +35,8 @@ export function DaftarLaporanClient({
   const [laporanList, setLaporanList] = useState(initialLaporan);
   const [loading, setLoading] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [selectedLaporan, setSelectedLaporan] = useState<any | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const handleRefresh = async () => {
     setLoading(true);
@@ -45,6 +49,11 @@ export function DaftarLaporanClient({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleViewDetail = (laporan: any) => {
+    setSelectedLaporan(laporan);
+    setDrawerOpen(true);
   };
 
   return (
@@ -154,24 +163,35 @@ export function DaftarLaporanClient({
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          {laporan.status_kerusakan === 'DIPERIKSA' && (
-                            <form action={updateStatusAction}>
-                              <input type="hidden" name="id" value={laporan.id} />
-                              <input type="hidden" name="status" value="DITINDAKLANJUTI" />
-                              <Button type="submit" size="sm" variant="outline" className="inline">
-                                Proses
-                              </Button>
-                            </form>
-                          )}
-                          {laporan.status_kerusakan === 'DITINDAKLANJUTI' && (
-                            <form action={updateStatusAction}>
-                              <input type="hidden" name="id" value={laporan.id} />
-                              <input type="hidden" name="status" value="SELESAI" />
-                              <Button type="submit" size="sm" variant="outline" className="inline">
-                                Selesai
-                              </Button>
-                            </form>
-                          )}
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="inline"
+                              onClick={() => handleViewDetail(laporan)}
+                            >
+                              <FileText className="h-4 w-4 mr-1" />
+                              Detail
+                            </Button>
+                            {laporan.status_kerusakan === 'DIPERIKSA' && (
+                              <form action={updateStatusAction}>
+                                <input type="hidden" name="id" value={laporan.id} />
+                                <input type="hidden" name="status" value="DITINDAKLANJUTI" />
+                                <Button type="submit" size="sm" variant="outline" className="inline">
+                                  Proses
+                                </Button>
+                              </form>
+                            )}
+                            {laporan.status_kerusakan === 'DITINDAKLANJUTI' && (
+                              <form action={updateStatusAction}>
+                                <input type="hidden" name="id" value={laporan.id} />
+                                <input type="hidden" name="status" value="SELESAI" />
+                                <Button type="submit" size="sm" variant="outline" className="inline">
+                                  Selesai
+                                </Button>
+                              </form>
+                            )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -185,6 +205,13 @@ export function DaftarLaporanClient({
             </CardContent>
           </Card>
         </div>
+
+        {/* Laporan Detail Drawer */}
+        <LaporanKerusakanDetailDrawer
+          laporan={selectedLaporan}
+          open={drawerOpen}
+          onOpenChange={setDrawerOpen}
+        />
       </SidebarInset>
     </SidebarProvider>
   );

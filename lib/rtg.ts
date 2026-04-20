@@ -748,10 +748,17 @@ export async function getRTGUnitHistory(
       u.nama_rtg,
       usr.nama as diubah_oleh_nama,
       usr.email as diubah_oleh_email,
-      usr.role as diubah_oleh_role
+      usr.role as diubah_oleh_role,
+      l.foto_laporan,
+      l.jenis_kerusakan,
+      pk.foto_bukti as penindaklanjut_foto_bukti,
+      pk.deskripsi_tindakan,
+      pk.tanggal_selesai
     FROM rtg_status_history h
     INNER JOIN rtg_units u ON h.rtg_unit_id = u.id
     LEFT JOIN users usr ON h.diubah_oleh::uuid = usr.id
+    LEFT JOIN laporan_kerusakan l ON h.laporan_kerusakan_id = l.id
+    LEFT JOIN penindaklanjut_kerusakan pk ON l.id = pk.laporan_kerusakan_id
     WHERE h.rtg_unit_id = $1::uuid
     ORDER BY h.created_at DESC
     LIMIT $2
@@ -775,6 +782,9 @@ export async function getRTGUnitHistory(
       email: row.diubah_oleh_email,
       role: row.diubah_oleh_role,
     } : null,
+    foto_laporan: row.foto_laporan || [],
+    penindaklanjut_foto_bukti: row.penindaklanjut_foto_bukti || [],
+    jenis_kerusakan: row.jenis_kerusakan,
   }));
 }
 

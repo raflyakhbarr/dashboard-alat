@@ -13,7 +13,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { StatusKondisiLabels, StatusKondisiColors, type RTGStatusHistoryWithDetails, type RTGUnitWithGroup } from '@/types/rtg';
-import { Loader2, Clock, User, FileText } from 'lucide-react';
+import { Loader2, Clock, User, FileText, ImageIcon, CheckCircle2 } from 'lucide-react';
+import Image from 'next/image';
 
 interface RTGHistoryDrawerProps {
   rtgUnit: RTGUnitWithGroup | null;
@@ -25,6 +26,7 @@ export function RTGHistoryDrawer({ rtgUnit, open, onOpenChange }: RTGHistoryDraw
   const [history, setHistory] = useState<RTGStatusHistoryWithDetails[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
     if (open && rtgUnit) {
@@ -32,6 +34,7 @@ export function RTGHistoryDrawer({ rtgUnit, open, onOpenChange }: RTGHistoryDraw
     } else {
       setHistory([]);
       setError(null);
+      setSelectedImage(null);
     }
   }, [open, rtgUnit]);
 
@@ -67,6 +70,7 @@ export function RTGHistoryDrawer({ rtgUnit, open, onOpenChange }: RTGHistoryDraw
   };
 
   return (
+    <>
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent>
         <DrawerHeader className="border-b pb-4">
@@ -167,8 +171,71 @@ export function RTGHistoryDrawer({ rtgUnit, open, onOpenChange }: RTGHistoryDraw
 
                       {/* Related Laporan */}
                       {item.laporan_kerusakan_id && (
-                        <div className="text-xs text-muted-foreground">
-                          Terkait dengan laporan kerusakan
+                        <div className="space-y-3">
+                          <div className="text-xs font-medium text-muted-foreground">
+                            Terkait dengan laporan kerusakan
+                          </div>
+
+                          {/* Jenis Kerusakan */}
+                          {item.jenis_kerusakan && (
+                            <div className="text-sm">
+                              <span className="text-muted-foreground">Jenis: </span>
+                              <span className="font-medium">{item.jenis_kerusakan}</span>
+                            </div>
+                          )}
+
+                          {/* Foto Laporan */}
+                          {item.foto_laporan && item.foto_laporan.length > 0 && (
+                            <div>
+                              <div className="flex items-center gap-2 mb-2">
+                                <ImageIcon className="h-3 w-3 text-muted-foreground" />
+                                <p className="text-xs font-medium">Foto Laporan ({item.foto_laporan.length})</p>
+                              </div>
+                              <div className="flex flex-wrap gap-1.5">
+                                {item.foto_laporan.map((foto, idx) => (
+                                  <a
+                                    key={idx}
+                                    href={foto}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-muted hover:bg-muted/80 rounded-md transition-colors text-blue-600 hover:text-blue-700"
+                                  >
+                                    <ImageIcon className="h-2.5 w-2.5" />
+                                    Foto {idx + 1}
+                                  </a>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Foto Bukti Penindaklanjut */}
+                          {item.penindaklanjut_foto_bukti && item.penindaklanjut_foto_bukti.length > 0 && (
+                            <div className="bg-green-50 dark:bg-green-950/20 rounded-lg p-2 border border-green-200 dark:border-green-900">
+                              <div className="flex items-center gap-2 mb-2">
+                                <CheckCircle2 className="h-3 w-3 text-green-600" />
+                                <p className="text-xs font-medium text-green-700 dark:text-green-400">
+                                  Foto Bukti Penindaklanjut ({item.penindaklanjut_foto_bukti.length})
+                                </p>
+                              </div>
+                              <div className="grid grid-cols-3 gap-2">
+                                {item.penindaklanjut_foto_bukti.map((foto, idx) => (
+                                  <div
+                                    key={idx}
+                                    className="relative aspect-square rounded-md overflow-hidden border cursor-pointer hover:opacity-80 transition-opacity"
+                                    onClick={() => setSelectedImage(foto)}
+                                  >
+                                    <Image
+                                      src={foto}
+                                      alt={`Foto bukti ${idx + 1}`}
+                                      fill
+                                      className="object-cover"
+                                      sizes="(max-width: 768px) 33vw, 100px"
+                                    />
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
@@ -188,5 +255,32 @@ export function RTGHistoryDrawer({ rtgUnit, open, onOpenChange }: RTGHistoryDraw
         </div>
       </DrawerContent>
     </Drawer>
+
+    {/* Image Preview Modal */}
+    {selectedImage && (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+        onClick={() => setSelectedImage(null)}
+      >
+        <div className="relative max-w-4xl max-h-[90vh] w-full">
+          <Image
+            src={selectedImage}
+            alt="Preview"
+            width={800}
+            height={600}
+            className="w-full h-auto object-contain rounded-lg"
+          />
+          <Button
+            variant="secondary"
+            size="sm"
+            className="absolute top-2 right-2"
+            onClick={() => setSelectedImage(null)}
+          >
+            Tutup
+          </Button>
+        </div>
+      </div>
+    )}
+  </>
   );
 }

@@ -53,12 +53,12 @@ export function AppSidebar({ user }: { user?: { nama: string; email: string; rol
       isActive: pathname === "/dashboard",
     },
     ...(user?.role === 'operasional' ? [
-      {
-        title: "RTG Units",
-        url: "/operasional/rtg-units",
-        icon: <WrenchIcon className="h-4 w-4" />,
-        isActive: pathname === "/operasional/rtg-units",
-      },
+      // {
+      //   title: "RTG Units",
+      //   url: "/operasional/rtg-units",
+      //   icon: <WrenchIcon className="h-4 w-4" />,
+      //   isActive: pathname === "/operasional/rtg-units",
+      // },
       {
         title: "History",
         url: "/operasional/history",
@@ -71,11 +71,11 @@ export function AppSidebar({ user }: { user?: { nama: string; email: string; rol
         icon: <AlertTriangleIcon className="h-4 w-4" />,
         isActive: pathname?.startsWith("/operasional/buat-laporan") || pathname?.startsWith("/operasional/daftar-laporan"),
         items: [
-          {
-            title: "Buat Laporan",
-            url: "/operasional/buat-laporan",
-            isActive: pathname === "/operasional/buat-laporan",
-          },
+          // {
+          //   title: "Buat Laporan",
+          //   url: "/operasional/buat-laporan",
+          //   isActive: pathname === "/operasional/buat-laporan",
+          // },
           {
             title: "Daftar Laporan",
             url: "/operasional/daftar-laporan",
