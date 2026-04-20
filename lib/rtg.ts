@@ -447,6 +447,123 @@ export async function deleteLaporan(id: string): Promise<boolean> {
   return (result.rowCount || 0) > 0;
 }
 
+/**
+ * Cek apakah laporan sudah ada berdasarkan kombinasi
+ * rtg_unit_id, tanggal_laporan, nama_pelapor, dan jenis_kerusakan
+ *
+ * Menggunakan normalization untuk pengecekan yang lebih akurat:
+ * - Trim whitespace
+ * - Case insensitive untuk nama pelapor dan jenis kerusakan
+ */
+export async function cekLaporanExist(
+  rtg_unit_id: string,
+  tanggal_laporan: string,
+  nama_pelapor: string,
+  jenis_kerusakan: string
+): Promise<boolean> {
+  // Normalize input data
+  const normalizedNama = nama_pelapor.trim().toLowerCase();
+  const normalizedJenis = jenis_kerusakan.trim().toLowerCase();
+
+  const result = await pool.query(
+    `SELECT id FROM laporan_kerusakan
+     WHERE rtg_unit_id = $1::uuid
+     AND tanggal_laporan = $2
+     AND LOWER(TRIM(nama_pelapor)) = $3
+     AND LOWER(TRIM(jenis_kerusakan)) = $4
+     LIMIT 1`,
+    [rtg_unit_id, tanggal_laporan, normalizedNama, normalizedJenis]
+  );
+
+  return result.rows.length > 0;
+}
+
+/**
+ * Debug: Cek apakah laporan sudah ada dan return detailnya
+ * Berguna untuk melihat apa yang sebenarnya dicari vs apa yang ada di database
+ */
+export async function cekLaporanExistDebug(
+  rtg_unit_id: string,
+  tanggal_laporan: string,
+  nama_pelapor: string,
+  jenis_kerusakan: string
+): Promise<{ exists: boolean; foundData?: any; searchData?: any }> {
+  // Normalize input data
+  const normalizedNama = nama_pelapor.trim().toLowerCase();
+  const normalizedJenis = jenis_kerusakan.trim().toLowerCase();
+
+  // Cari data yang cocok
+  const result = await pool.query(
+    `SELECT id, nama_pelapor, tanggal_laporan, jenis_kerusakan
+     FROM laporan_kerusakan
+     WHERE rtg_unit_id = $1::uuid
+     AND tanggal_laporan = $2
+     AND LOWER(TRIM(nama_pelapor)) = $3
+     AND LOWER(TRIM(jenis_kerusakan)) = $4
+     LIMIT 1`,
+    [rtg_unit_id, tanggal_laporan, normalizedNama, normalizedJenis]
+  );
+
+  // Cari semua laporan untuk RTG dan tanggal yang sama (untuk debug)
+  const allReports = await pool.query(
+    `SELECT id, nama_pelapor, tanggal_laporan, jenis_kerusakan
+     FROM laporan_kerusakan
+     WHERE rtg_unit_id = $1::uuid
+     AND tanggal_laporan = $2
+     ORDER BY created_at DESC
+     LIMIT 5`,
+    [rtg_unit_id, tanggal_laporan]
+  );
+
+  return {
+    exists: result.rows.length > 0,
+    foundData: result.rows[0] || null,
+    searchData: {
+      rtg_unit_id,
+      tanggal_laporan,
+      nama_pelapor: normalizedNama,
+      jenis_kerusakan: normalizedJenis,
+    },
+    allReportsForDate: allReports.rows,
+  };
+}
+
+/**
+ * Cek apakah ada laporan dengan kombinasi yang sama dalam batch data
+ * Returns array of indices yang data nya sudah ada
+ */
+export async function cekBatchLaporanExist(data: any[]): Promise<number[]> {
+  const existingIndices: number[] = [];
+
+  for (let i = 0; i < data.length; i++) {
+    const row = data[i];
+    const rtgCode = row['Jenis dan Nomor Alat yang anda operasikan contoh : RTG 51'];
+    const rtgUnit = await getRTGUnitByCode(rtgCode.replace(/^RTG\s*/, ''));
+
+    if (rtgUnit) {
+      const tanggal = parseExcelDate(row['Tanggal Pengoprasian']);
+      const namaPelapor = row['Name'];
+      const temuanPra = row['Temuan Pra-Penggunaan'] || '';
+
+      // Hanya cek jika ada temuan
+      if (temuanPra && !temuanPra.toLowerCase().includes('tidak ada')) {
+        const exists = await cekLaporanExist(
+          rtgUnit.id,
+          tanggal,
+          namaPelapor,
+          temuanPra
+        );
+
+        if (exists) {
+          existingIndices.push(i);
+        }
+      }
+    }
+  }
+
+  return existingIndices;
+}
+
 export async function getLaporanCountByStatus(): Promise<Record<StatusKerusakan, number>> {
   const result = await pool.query(`
     SELECT

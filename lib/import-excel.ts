@@ -34,14 +34,35 @@ export async function readExcelFile(file: File): Promise<any[]> {
         const workbook = XLSX.read(data, { type: 'array' });
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(sheet);
+        const jsonData = XLSX.utils.sheet_to_json(sheet, { defval: '' });
 
         // Filter out empty rows and header
         const filteredData = jsonData.filter((row: any) =>
           row['Email'] && row['Name'] && row['Jenis dan Nomor Alat yang anda operasikan contoh : RTG 51']
         );
 
-        resolve(filteredData);
+        // Convert to plain objects to avoid serialization issues
+        const plainData = filteredData.map((row: any) => {
+          const plain: any = {};
+          for (const key in row) {
+            if (Object.prototype.hasOwnProperty.call(row, key)) {
+              const value = row[key];
+              // Convert to primitive values
+              if (value === null || value === undefined) {
+                plain[key] = '';
+              } else if (typeof value === 'object' && value.constructor === Object) {
+                plain[key] = JSON.stringify(value);
+              } else if (typeof value === 'function') {
+                plain[key] = String(value);
+              } else {
+                plain[key] = value;
+              }
+            }
+          }
+          return plain;
+        });
+
+        resolve(plainData);
       } catch (error) {
         reject(error);
       }
@@ -55,13 +76,62 @@ export async function readExcelFile(file: File): Promise<any[]> {
   });
 }
 
+/**
+ * Serialize data untuk dikirim ke server action
+ * Memastikan semua data adalah plain objects
+ * Menggunakan JSON.parse/stringify untuk benar-benar menghapus semua methods dan non-enumerable properties
+ */
+export function serializeForServer(data: any[]): any[] {
+  // Gunakan JSON.parse/stringify untuk deep clone dan remove semua methods
+  const jsonString = JSON.stringify(data);
+  const parsed = JSON.parse(jsonString);
+
+  // Pastikan semua values adalah primitive types
+  return parsed.map((row: any) => {
+    const plain: any = {};
+    for (const key in row) {
+      if (Object.prototype.hasOwnProperty.call(row, key)) {
+        let value = row[key];
+
+        // Convert number values (Excel dates are numbers)
+        if (typeof value === 'number' && !isNaN(value)) {
+          plain[key] = value;
+        }
+        // Convert Date objects to ISO string
+        else if (value instanceof Date) {
+          plain[key] = value.toISOString();
+        }
+        // Convert to string if needed
+        else if (value === null || value === undefined) {
+          plain[key] = '';
+        } else if (typeof value === 'object') {
+          plain[key] = JSON.stringify(value);
+        } else if (typeof value === 'function') {
+          plain[key] = String(value);
+        } else {
+          plain[key] = String(value);
+        }
+      }
+    }
+    return plain;
+  });
+}
+
 export function parseExcelDate(excelDate: number): string {
+  // Handle null/undefined/NaN
+  if (excelDate === null || excelDate === undefined || isNaN(excelDate)) {
+    return new Date().toISOString().split('T')[0]; // Return today's date as fallback
+  }
+
   // Excel date is number of days since 1/1/1900
   const date = new Date(Math.round((excelDate - 25569) * 86400 * 1000));
   return date.toISOString().split('T')[0];
 }
 
 export function extractRTGCode(jenisAlat: string): string {
+  // Handle null/undefined
+  if (!jenisAlat) return '';
+
   // Extract "45" from "RTG 45" or just return the cleaned code
   const cleaned = jenisAlat.trim().toUpperCase();
   // Remove "RTG" prefix if present and get just the number/code
@@ -120,4 +190,47 @@ export function suggestPenindakLanjut(temuan: string): 'fasilitas' | 'peralatan_
   } else {
     return 'perencanaan_persediaan'; // General/supply
   }
+}
+
+/**
+ * Filter data baru dari data Excel
+ * @param allData - Semua data dari Excel
+ * @param existingIndices - Index data yang sudah ada di database
+ * @returns Data baru yang belum ada di database
+ */
+export function filterDataBaru(allData: any[], existingIndices: number[]): {
+  newData: any[];
+  existingData: any[];
+} {
+  const newData: any[] = [];
+  const existingData: any[] = [];
+  const existingSet = new Set(existingIndices);
+
+  allData.forEach((row, index) => {
+    if (existingSet.has(index)) {
+      existingData.push(row);
+    } else {
+      newData.push(row);
+    }
+  });
+
+  return { newData, existingData };
+}
+
+/**
+ * Mendapatkan RTG Code dari row dengan pencarian fleksibel
+ * Mencoba multiple possible keys untuk mencari RTG code
+ */
+export function getRTGCodeFromRow(row: any): string {
+  // Coba multiple possible keys dengan urutan prioritas
+  const rtgValue =
+    row['Jenis dan Nomor Alat yang anda operasikan contoh : RTG 51'] ||
+    row['Jenis dan Nomor Alat yang anda operasikan contoh : RTG51'] ||
+    row['Jenis dan Nomor Alat yang anda operasikan contoh : RTG'] ||
+    row['RTG'] ||
+    row['rtg'] ||
+    row['Jenis dan Nomor Alat'] ||
+    '';
+
+  return extractRTGCode(rtgValue);
 }
